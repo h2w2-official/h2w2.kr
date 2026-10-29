@@ -53,7 +53,11 @@
     .stage { position: relative; width: calc(50vw * 394 / 334); max-height: 90vh; line-height: 0; touch-action: pan-y; }
     .stage svg, .stage canvas { display: block; width: 100%; height: auto; }
     .stage canvas { position: absolute; inset: 0; height: 100%; pointer-events: none; }
-    .stage.gl svg { visibility: hidden; }    #logo { visibility: hidden; }    .logo-static { position: absolute; left: 11.29%; top: 16.57%; width: 77.41%; height: auto; pointer-events: none; }    .stage.gl .logo-static { visibility: hidden; }    @media (prefers-color-scheme: dark) { .logo-static { filter: invert(1); } }
+    .stage.gl svg { visibility: hidden; }
+    #logo { visibility: hidden; }
+    .logo-static { position: absolute; left: 11.29%; top: 16.57%; width: 77.41%; height: auto; pointer-events: none; }
+    .stage.gl .logo-static { visibility: hidden; }
+    @media (prefers-color-scheme: dark) { .logo-static { filter: invert(1); } }
     .hint { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); opacity: .5; }
     .about { max-width: 1120px; margin: 0 auto; padding: 120px 28px 140px; text-transform: none; letter-spacing: 0; }
     .about .mono { font-size: 12px; letter-spacing: .02em; text-transform: uppercase; opacity: .5; }
@@ -120,7 +124,8 @@
 <path id="stroke6_872_2" d="M117.874 22.7754C124.55 22.9699 130.208 23.9783 135.026 27.6352C141.472 32.5286 143.838 39.1844 142.856 47.0071C141.684 56.3377 136.166 62.9695 128.827 68.3576C124.294 71.6855 119.191 73.9281 114.061 76.1515C111.344 77.328 108.69 78.687 106.132 80.1757C104.287 81.249 102.759 82.7761 101.94 84.8386C101.254 86.5674 101.133 88.2962 102.351 89.8425C103.643 91.4824 105.492 92.0803 107.425 91.5977C109.501 91.079 111.595 90.3635 113.462 89.3358C117.329 87.2109 121.002 84.745 124.844 82.5696C128.36 80.5791 132.104 79.0784 136.236 79.0448C144.568 78.9752 149.886 85.8639 147.739 93.8667C145.039 103.932 135.135 109.298 124.781 106.23C122.671 105.606 120.608 104.777 118.592 103.891C113.851 101.805 109.226 101.651 104.592 104.237C101.223 106.119 97.7306 107.8 93.8593 108.379C89.6233 109.01 85.5684 108.494 82.0545 105.819C77.9031 102.659 76.5193 98.3231 77.2897 93.3673C78.2533 87.1557 81.7792 82.4327 86.6914 78.6582C91.0795 75.2847 96.0328 72.9004 101.044 70.6122C105.314 68.6649 109.627 66.7825 113.766 64.5855C117.713 62.4917 121.113 59.6681 123.11 55.5166C124.074 53.5141 124.419 51.4107 123.897 49.2161C122.743 44.3828 117.5 41.9985 112.701 44.109C109.905 45.3384 107.963 47.4946 106.277 49.9269C105.227 51.4395 104.299 53.0459 103.155 54.4841C100.81 57.4374 97.7716 59.111 93.8979 58.4507C90.0894 57.8 87.3773 54.6114 86.8098 50.4743C86.1601 45.7274 87.4353 41.415 90.0218 37.4916C95.4073 29.3183 103.403 25.1885 112.779 23.3421C114.701 22.9627 116.686 22.9002 117.87 22.7754H117.874Z"/>
 </defs>
     </svg>
-    <img class="logo-static" src="/media/logo/h2w2.svg" alt="">    <canvas id="fx" aria-hidden="true"></canvas>
+    <img class="logo-static" src="/media/logo/h2w2.svg" alt="">
+    <canvas id="fx" aria-hidden="true"></canvas>
   </h1>
     <a class="hint roll" href="#about"><span>About ↓</span><span aria-hidden="true">About ↓</span></a>
   </main>
@@ -161,4 +166,6 @@
       intro.addEventListener('click', closeIntro); setTimeout(closeIntro, 6000);
     })();
   </script>
-  <script>  <script src="/logo.js"></script></body></html>
+  <script src="/logo.js"></script>
+</body>
+</html>
