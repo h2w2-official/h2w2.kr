@@ -124,7 +124,7 @@
     box.addEventListener('pointermove', e => { const r = box.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5; target.y = BASE.y + px * 2.4; target.x = BASE.x + py * 1.6; go(); });
     box.addEventListener('pointerleave', () => { target.x = BASE.x; target.y = BASE.y; go(); });
     new GLTFLoader().load('/media/re_floss.glb', gltf => {
-      const obj = gltf.scene; obj.rotation.x = 0; obj.updateMatrixWorld(true);
+      const obj = gltf.scene; obj.rotation.x = Math.PI / 2; obj.updateMatrixWorld(true);
       const mat = new THREE.MeshStandardMaterial({ color: 0xd6d6d1, roughness: 0.55, metalness: 0 });
       obj.traverse(o => { if (o.isMesh) o.material = mat; });
       const b = new THREE.Box3().setFromObject(obj); obj.position.sub(b.getCenter(new THREE.Vector3()));
