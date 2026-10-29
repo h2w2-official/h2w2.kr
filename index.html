@@ -35,7 +35,8 @@
     .roll > span { display: block; transition: transform .35s cubic-bezier(.65,0,.35,1); }
     .roll > span + span { position: absolute; left: 0; top: 100%; }
     .roll:hover > span, .roll:focus-visible > span { transform: translateY(-100%); }
-    main { display: grid; place-items: center; min-height: calc(100svh - 58px); position: relative; }
+    header.bar { position: absolute; top: 0; left: 0; right: 0; z-index: 2; }
+    main { display: grid; place-items: center; min-height: 100svh; position: relative; padding-bottom: 4svh; overflow: hidden; }
     .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; pointer-events: none; }
     .dock > * { pointer-events: auto; }
     .dock .label { font-style: normal; opacity: .5; margin-right: 10px; }
@@ -123,7 +124,7 @@
     <p class="ko">h2w2(해브투원투)는 해야만 하는 일을 디자인으로 하고 싶게 만드는 브랜드입니다. ‘지금까지 그래왔으니까, 당연히.’ 그렇게 넘겨 온 일상의 불편함을 찾아내고 고칩니다. 써 본 사람이 ‘원래 이랬어야 했네’라고 말하는 것, 그것이 우리가 만드는 해결책의 기준입니다.</p>
     <ol class="principles"><li><span class="mono">01</span><h3>Question the usual</h3><div class="ko">당연함을 의심합니다</div><p>We start from the inconveniences everyone shrugged off as “just how it is” — and revisit habits that stay only because they are old.</p><p class="ko">‘원래 그런 것’이라 넘겨 온 불편함에서 시작합니다. 오래됐다는 이유로 남아 있는 방식부터 다시 봅니다.</p></li><li><span class="mono">02</span><h3>Fix the cause</h3><div class="ko">원인부터 고칩니다</div><p>We don’t just change the shape. We redesign how it is used, from the structure up.</p><p class="ko">겉모양만 바꾸지 않습니다. 쓰는 순서와 구조를 처음부터 다시 설계합니다.</p></li><li><span class="mono">03</span><h3>Make it want-to</h3><div class="ko">하고 싶게 만듭니다</div><p>Even chores should feel easy to reach for. We design for a moment of use that is a little more enjoyable.</p><p class="ko">귀찮은 일도 손이 먼저 가도록. 쓰는 순간이 조금 더 즐거운 디자인을 만듭니다.</p></li><li><span class="mono">04</span><h3>Leave less behind</h3><div class="ko">덜 남깁니다</div><p>We look first for lower-impact choices, such as recycled materials.</p><p class="ko">재생 원료처럼 환경 부담이 적은 선택을 먼저 고민합니다.</p></li></ol>
   </section>
-a    <div class="copy">&copy;<span id="year">2026</span> <span class="lc">h2w2</span>. All rights reserved.</div>
+    <div class="copy">&copy;<span id="year">2026</span> <span class="lc">h2w2</span>. All rights reserved.</div>
   <footer class="bar dock">
     <button class="roll" type="button" id="copyMail" data-mail="official@h2w2.kr" aria-label="Copy email address official@h2w2.kr"><span><i class="label">E.</i><span class="lc" data-t>official@h2w2.kr</span></span><span aria-hidden="true"><i class="label">E.</i><span class="lc" data-t>Click to copy</span></span></button>
     <a class="roll r" href="https://www.instagram.com/h2w2_official/" target="_blank" rel="noopener"><span><i class="label">Ins.</i>@H2W2_OFFICIAL</span><span aria-hidden="true"><i class="label">Ins.</i>@H2W2_OFFICIAL</span></a>
