@@ -16,13 +16,13 @@
     :root { --bg: #fafaf8; --fg: #111111; }
     @media (prefers-color-scheme: dark) { :root { --bg: #111111; --fg: #f2f2ee; } }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; }
+    html { height: 100%; scroll-behavior: smooth; } body { min-height: 100%; }
     body {
-      background: var(--bg); color: var(--fg); overflow: hidden;
+      background: var(--bg); color: var(--fg); overflow-x: hidden;
       font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 13px; line-height: 1.4; letter-spacing: 0.02em; text-transform: uppercase;
       -webkit-font-smoothing: antialiased;
-      display: grid; grid-template-rows: auto 1fr auto; min-height: 100%;
+      display: block;
     }
     a { color: inherit; text-decoration: none; }
     .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 28px; }
@@ -35,7 +35,7 @@
     .roll > span { display: block; transition: transform .35s cubic-bezier(.65,0,.35,1); }
     .roll > span + span { position: absolute; left: 0; top: 100%; }
     .roll:hover > span, .roll:focus-visible > span { transform: translateY(-100%); }
-    main { display: grid; place-items: center; min-height: 0; }
+    main { display: grid; place-items: center; min-height: calc(100svh - 58px); position: relative; }
     footer.bar { display: grid; grid-template-columns: 1fr auto 1fr; }
     footer .r { text-align: right; justify-self: end; }
     footer .label { font-style: normal; opacity: .5; margin-right: 10px; }
@@ -49,10 +49,24 @@
       footer .copy { grid-column: 1 / -1; grid-row: 2; }
     }
     @media (prefers-reduced-motion: reduce) { .clock .dot { animation: none; } .roll > span { transition: none; } }
-    .stage { position: relative; width: calc(50vw * 394 / 334); max-height: 90vh; line-height: 0; touch-action: none; }
+    .stage { position: relative; width: calc(50vw * 394 / 334); max-height: 90vh; line-height: 0; touch-action: pan-y; }
     .stage svg, .stage canvas { display: block; width: 100%; height: auto; }
     .stage canvas { position: absolute; inset: 0; height: 100%; pointer-events: none; }
     .stage.gl svg { visibility: hidden; }
+    .hint { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); opacity: .5; }
+    .about { max-width: 1120px; margin: 0 auto; padding: 120px 28px 140px; text-transform: none; letter-spacing: 0; font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    .about .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: .02em; text-transform: uppercase; opacity: .5; }
+    .about h2 { margin-top: 28px; font-size: clamp(30px, 4.4vw, 60px); font-weight: 500; line-height: 1.25; letter-spacing: -.02em; word-break: keep-all; }
+    .about h2 + .mono { margin-top: 14px; }
+    .about .lead { max-width: 680px; margin-top: 64px; font-size: clamp(16px, 1.5vw, 19px); line-height: 1.8; word-break: keep-all; }
+    .about .lead + .mono { max-width: 680px; margin-top: 18px; line-height: 1.7; text-transform: none; }
+    .principles { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 28px; row-gap: 48px; margin-top: 112px; }
+    .principles li { border-top: 1px solid currentColor; padding-top: 18px; }
+    .principles h3 { margin-top: 36px; font-size: 18px; font-weight: 600; word-break: keep-all; }
+    .principles h3 + .mono { margin-top: 6px; }
+    .principles p { margin-top: 16px; font-size: 14px; line-height: 1.75; opacity: .8; word-break: keep-all; }
+    @media (max-width: 900px) { .principles { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { .about { padding: 80px 16px 96px; } .about .lead { margin-top: 44px; } .principles { grid-template-columns: 1fr; margin-top: 72px; } main { min-height: calc(100svh - 47px); } }
   </style>
 </head>
 <body>
@@ -96,7 +110,16 @@
     </svg>
     <canvas id="fx" aria-hidden="true"></canvas>
   </h1>
+    <a class="hint roll" href="#about"><span>About ↓</span><span aria-hidden="true">About ↓</span></a>
   </main>
+  <section class="about" id="about">
+    <div class="mono">About — h2w2</div>
+    <h2>해야만 하는 일을,<br>하고 싶은 일로.</h2>
+    <div class="mono">From have-to, to want-to.</div>
+    <p class="lead">h2w2(해브투원투)는 해야만 하는 일을 디자인으로 하고 싶게 만드는 브랜드입니다. ‘지금까지 그래왔으니까, 당연히.’ 그렇게 넘겨 온 일상의 불편함을 찾아내고 고칩니다. 써 본 사람이 ‘원래 이랬어야 했네’라고 말하는 것, 그것이 우리가 만드는 해결책의 기준입니다.</p>
+    <p class="mono">h2w2 is a design brand that turns the things you have to do into things you want to do. We find the everyday inconveniences everyone accepted as “just the way it is” — and fix them, until you say: “It should have always been this way.”</p>
+    <ol class="principles"><li><span class="mono">01</span><h3>당연함을 의심합니다</h3><div class="mono">Question the usual</div><p>‘원래 그런 것’이라 넘겨 온 불편함에서 시작합니다. 오래됐다는 이유로 남아 있는 방식부터 다시 봅니다.</p></li><li><span class="mono">02</span><h3>원인부터 고칩니다</h3><div class="mono">Fix the cause</div><p>모양만 바꾸지 않습니다. 쓰는 순서와 구조를 처음부터 다시 설계합니다.</p></li><li><span class="mono">03</span><h3>하고 싶게 만듭니다</h3><div class="mono">Make it want-to</div><p>귀찮은 일도 손이 먼저 가도록. 쓰는 순간이 조금 더 즐거운 디자인을 만듭니다.</p></li><li><span class="mono">04</span><h3>덜 남깁니다</h3><div class="mono">Leave less behind</div><p>재생 원료처럼 환경 부담이 적은 선택을 먼저 고민합니다.</p></li></ol>
+  </section>
   <footer class="bar">
     <a class="roll" href="mailto:official@h2w2.kr"><span><i class="label">E.</i><span class="lc">official@h2w2.kr</span></span><span aria-hidden="true"><i class="label">E.</i><span class="lc">official@h2w2.kr</span></span></a>
     <div class="copy">&copy;<span id="year">2026</span> <span class="lc">h2w2</span>. All rights reserved.</div>
