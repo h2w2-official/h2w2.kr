@@ -74,8 +74,6 @@
           <stop offset="1" stop-color="#fff" stop-opacity="0"/>
         </radialGradient>
         <mask id="spotMask" maskUnits="userSpaceOnUse" x="-30" y="-30" width="394" height="181">
-          <circle id="idle1" cx="60" cy="60" r="0" fill="url(#spotGrad)" opacity="0.8"/>
-          <circle id="idle2" cx="270" cy="60" r="0" fill="url(#spotGrad)" opacity="0.8"/>
           <circle id="spot" cx="167" cy="60" r="0" fill="url(#spotGrad)"/>
         </mask>
         <filter id="bleed" filterUnits="userSpaceOnUse" x="-30" y="-30" width="394" height="181" color-interpolation-filters="sRGB">
@@ -104,18 +102,14 @@
     (function () {
       var svg = document.getElementById('logo');
       var spot = document.getElementById('spot');
-      var idle1 = document.getElementById('idle1');
-      var idle2 = document.getElementById('idle2');
       var disp = document.getElementById('disp');
       var noise = document.getElementById('noise');
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce) return;
 
       var MAX_R = 105;      // 마우스 주변 번짐 반경
-      var IDLE_R = 58;      // 가만히 있을 때 떠다니는 번짐 반경
       var target = { x: 167, y: 60, r: 0 };
       var cur = { x: 167, y: 60, r: 0 };
-      var idleAmt = 0;      // 시작할 때 서서히 나타나도록
       var hovering = false;
 
       function toSvg(e) {
@@ -140,26 +134,16 @@
         cur.r += (target.r - cur.r) * (hovering ? 0.07 : 0.05);
         set(spot, cur.x, cur.y, cur.r);
 
-        // 가만히 있어도 천천히 떠다니는 잉크 두 방울
-        idleAmt += (1 - idleAmt) * 0.01;
-        var calm = 1 - 0.5 * (cur.r / MAX_R); // 마우스가 있을 땐 조금 약하게
-        set(idle1,
-            150 + 130 * Math.sin(s * 0.23),
-            68 + 30 * Math.sin(s * 0.37 + 1.1),
-            IDLE_R * idleAmt * calm * (0.85 + 0.15 * Math.sin(s * 0.6)));
-        set(idle2,
-            150 + 130 * Math.sin(s * 0.17 + 2.6),
-            68 + 30 * Math.cos(s * 0.29 + 0.4),
-            IDLE_R * idleAmt * calm * (0.85 + 0.15 * Math.cos(s * 0.5)));
-
         // 가장자리 일렁임
         var hov = cur.r / MAX_R;
         disp.setAttribute('scale', (7 + hov * 7).toFixed(2));
         noise.setAttribute('baseFrequency', (0.04 + 0.008 * Math.sin(s * 0.4)).toFixed(4));
 
+        if (!hovering && cur.r < 0.3) { set(spot, cur.x, cur.y, 0); running = false; return; }
         requestAnimationFrame(frame);
       }
-      requestAnimationFrame(frame);
+      var running = false;
+      function start() { if (!running) { running = true; requestAnimationFrame(frame); } }
 
       function move(e) {
         var p = toSvg(e);
@@ -167,8 +151,9 @@
         target.x = p.x; target.y = p.y;
         hovering = true;
         target.r = MAX_R;
+        start();
       }
-      function leave() { hovering = false; target.r = 0; }
+      function leave() { hovering = false; target.r = 0; start(); }
 
       svg.addEventListener('pointermove', move);
       svg.addEventListener('pointerdown', move);
