@@ -2,7 +2,7 @@
 (function () {
   var SRC = ['/media/logo/have.svg', '/media/logo/want.svg', '/media/logo/h2w2.svg'];
   var VB = { w: 394, h: 181 };                // frame the logos are centered in
-  var HOLD_FIRST = 700, MORPH = 10000, HOLD = 100;
+  var HOLD_FIRST = 0, MORPH = 10000, HOLD = 100;
   var stage = document.getElementById('stage');
   var canvas = document.getElementById('fx');
   if (!stage || !canvas) return;
@@ -176,7 +176,7 @@
   }
   function whenIntroGone(cb){
     if (!document.body.classList.contains('intro-on')) return cb();
-    var mo = new MutationObserver(function(){ if (!document.body.classList.contains('intro-on')) { mo.disconnect(); setTimeout(cb, 500); } });
+    var mo = new MutationObserver(function(){ if (!document.body.classList.contains('intro-on')) { mo.disconnect(); setTimeout(cb, 0); } });
     mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   }
 
