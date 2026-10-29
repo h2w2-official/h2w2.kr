@@ -37,17 +37,17 @@
     .roll:hover > span, .roll:focus-visible > span { transform: translateY(-100%); }
     header.bar { position: absolute; top: 0; left: 0; right: 0; z-index: 2; }
     main { display: grid; place-items: center; min-height: 100svh; position: relative; padding-bottom: 4svh; overflow: hidden; }
-    .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; pointer-events: none; }
+    .dock { position: absolute; left: 0; right: 0; top: 100svh; transform: translateY(-100%); z-index: 5; pointer-events: none; }
     .dock > * { pointer-events: auto; }
     .dock .label { font-style: normal; opacity: .5; margin-right: 10px; }
     button.roll { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
-    .copy { opacity: .7; text-align: center; padding: 40px 28px 76px; }
+    .copy { opacity: .7; text-align: center; padding: 40px 28px; }
     .lc { text-transform: none; }
     @media (max-width: 640px) {
       body { font-size: 11px; }
       .bar { padding: 16px 16px; }
       nav { gap: 16px; }
-      .copy { padding: 32px 16px 64px; }
+      .copy { padding: 32px 16px; }
     }
     @media (prefers-reduced-motion: reduce) { .clock .dot { animation: none; } .roll > span { transition: none; } }
     .stage { position: relative; width: calc(50vw * 394 / 334); max-height: 90vh; line-height: 0; touch-action: pan-y; }
