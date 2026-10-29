@@ -114,7 +114,7 @@
     const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(120, 220, 260); scene.add(key);
     const rim = new THREE.DirectionalLight(0xffffff, 0.8); rim.position.set(-200, -60, -120); scene.add(rim);
     const pivot = new THREE.Group(); scene.add(pivot);
-    const BASE = { x: 0.1, y: -1, z: 2.63 };
+    const BASE = { x: 0.1, y: 0, z: 2.63 };
     const target = { x: BASE.x, y: BASE.y }, cur = { x: BASE.x, y: BASE.y };
     let radius = 100, running = false;
     function resize(){ const w = box.clientWidth, h = box.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; const fit = radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)); camera.position.set(0, 0, fit * (camera.aspect < 1 ? 1.25 / camera.aspect : 1.05)); camera.lookAt(0, 0, 0); camera.updateProjectionMatrix(); draw(); }
