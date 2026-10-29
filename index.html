@@ -36,17 +36,17 @@
     .roll > span + span { position: absolute; left: 0; top: 100%; }
     .roll:hover > span, .roll:focus-visible > span { transform: translateY(-100%); }
     main { display: grid; place-items: center; min-height: calc(100svh - 58px); position: relative; }
-    footer.bar { display: grid; grid-template-columns: 1fr auto 1fr; }
-    footer .r { text-align: right; justify-self: end; }
-    footer .label { font-style: normal; opacity: .5; margin-right: 10px; }
-    .copy { opacity: .7; text-align: center; }
+    .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; pointer-events: none; }
+    .dock > * { pointer-events: auto; }
+    .dock .label { font-style: normal; opacity: .5; margin-right: 10px; }
+    button.roll { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+    .copy { opacity: .7; text-align: center; padding: 40px 28px 76px; }
     .lc { text-transform: none; }
     @media (max-width: 640px) {
       body { font-size: 11px; }
       .bar { padding: 16px 16px; }
       nav { gap: 16px; }
-      footer.bar { grid-template-columns: 1fr 1fr; row-gap: 10px; }
-      footer .copy { grid-column: 1 / -1; grid-row: 2; }
+      .copy { padding: 32px 16px 64px; }
     }
     @media (prefers-reduced-motion: reduce) { .clock .dot { animation: none; } .roll > span { transition: none; } }
     .stage { position: relative; width: calc(50vw * 394 / 334); max-height: 90vh; line-height: 0; touch-action: pan-y; }
@@ -66,7 +66,9 @@
     .principles h3 + .ko { margin-top: 4px; } .principles p + .ko { margin-top: 10px; }
     .principles p { margin-top: 16px; font-size: 14px; line-height: 1.75; opacity: .8; word-break: keep-all; }
     @media (max-width: 900px) { .principles { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 640px) { .about { padding: 80px 16px 96px; } .about .lead { margin-top: 44px; } .principles { grid-template-columns: 1fr; margin-top: 72px; } main { min-height: calc(100svh - 47px); } }
+    @media (max-width: 640px) { .about { padding: 80px 16px 96px; } .about .lead { margin-top: 44px; } .principles { grid-template-columns: 1fr; margin-top: 72px; } .hint { display: none; } }
+    .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; opacity: .5; pointer-events: none; z-index: 0; }
+    .stage, .hint { z-index: 1; }
   </style>
 </head>
 <body>
@@ -78,6 +80,7 @@
     </nav>
   </header>
   <main>
+    <video class="bg" src="media/production.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
   <h1 class="stage" id="stage">
     <svg id="logo" role="img" aria-label="h2w2" viewBox="-30 -30 394 181" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <path d="M320.967 24.6523L320.967 33.3438H318.721L318.721 20.6484L321.504 20.6484L325.41 29.9258L329.316 20.6484L332.051 20.6484L332.051 33.3438H329.805L329.805 24.7256L325.996 33.3438H324.775L320.967 24.6523ZM310.42 22.6016L306.562 22.6016V20.6484L316.523 20.6484V22.6016L312.666 22.6016L312.666 33.3438H310.42L310.42 22.6016Z" fill="currentColor"/>
@@ -114,15 +117,15 @@
   </main>
   <section class="about" id="about">
     <div class="mono">About — h2w2</div>
-    <h2>From have-to,<br>to want-to.</h2>
+    <h2>From have-to,<br>To want-to.</h2>
     <div class="ko ko-h">해야만 하는 일을, 하고 싶은 일로.</div>
     <p class="lead">h2w2 (have to → want to) is a design brand that turns the things you have to do into things you want to do. We find the everyday inconveniences everyone accepted with “we’ve always done it this way” — and fix them, until you say: “It should have been like this all along.”</p>
     <p class="ko">h2w2(해브투원투)는 해야만 하는 일을 디자인으로 하고 싶게 만드는 브랜드입니다. ‘지금까지 그래왔으니까, 당연히.’ 그렇게 넘겨 온 일상의 불편함을 찾아내고 고칩니다. 써 본 사람이 ‘원래 이랬어야 했네’라고 말하는 것, 그것이 우리가 만드는 해결책의 기준입니다.</p>
     <ol class="principles"><li><span class="mono">01</span><h3>Question the usual</h3><div class="ko">당연함을 의심합니다</div><p>We start from the inconveniences everyone shrugged off as “just how it is” — and revisit habits that stay only because they are old.</p><p class="ko">‘원래 그런 것’이라 넘겨 온 불편함에서 시작합니다. 오래됐다는 이유로 남아 있는 방식부터 다시 봅니다.</p></li><li><span class="mono">02</span><h3>Fix the cause</h3><div class="ko">원인부터 고칩니다</div><p>We don’t just change the shape. We redesign how it is used, from the structure up.</p><p class="ko">겉모양만 바꾸지 않습니다. 쓰는 순서와 구조를 처음부터 다시 설계합니다.</p></li><li><span class="mono">03</span><h3>Make it want-to</h3><div class="ko">하고 싶게 만듭니다</div><p>Even chores should feel easy to reach for. We design for a moment of use that is a little more enjoyable.</p><p class="ko">귀찮은 일도 손이 먼저 가도록. 쓰는 순간이 조금 더 즐거운 디자인을 만듭니다.</p></li><li><span class="mono">04</span><h3>Leave less behind</h3><div class="ko">덜 남깁니다</div><p>We look first for lower-impact choices, such as recycled materials.</p><p class="ko">재생 원료처럼 환경 부담이 적은 선택을 먼저 고민합니다.</p></li></ol>
   </section>
-  <footer class="bar">
-    <a class="roll" href="mailto:official@h2w2.kr"><span><i class="label">E.</i><span class="lc">official@h2w2.kr</span></span><span aria-hidden="true"><i class="label">E.</i><span class="lc">official@h2w2.kr</span></span></a>
-    <div class="copy">&copy;<span id="year">2026</span> <span class="lc">h2w2</span>. All rights reserved.</div>
+a    <div class="copy">&copy;<span id="year">2026</span> <span class="lc">h2w2</span>. All rights reserved.</div>
+  <footer class="bar dock">
+    <button class="roll" type="button" id="copyMail" data-mail="official@h2w2.kr" aria-label="Copy email address official@h2w2.kr"><span><i class="label">E.</i><span class="lc" data-t>official@h2w2.kr</span></span><span aria-hidden="true"><i class="label">E.</i><span class="lc" data-t>Click to copy</span></span></button>
     <a class="roll r" href="https://www.instagram.com/h2w2_official/" target="_blank" rel="noopener"><span><i class="label">Ins.</i>@H2W2_OFFICIAL</span><span aria-hidden="true"><i class="label">Ins.</i>@H2W2_OFFICIAL</span></a>
   </footer>
   <script>
@@ -136,6 +139,13 @@
       }
       tick(); setInterval(tick, 1000);
       document.getElementById('year').textContent = new Date().getFullYear();
+      var btn = document.getElementById('copyMail'), mail = btn.getAttribute('data-mail'), timer;
+      function fallback(){ var t = document.createElement('textarea'); t.value = mail; t.setAttribute('readonly',''); t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); var ok = false; try { ok = document.execCommand('copy'); } catch(e){} document.body.removeChild(t); return ok; }
+      function done(ok){ var t = btn.querySelectorAll('[data-t]'); t[0].textContent = t[1].textContent = ok ? 'Copied!' : mail; clearTimeout(timer); timer = setTimeout(function(){ t[0].textContent = mail; t[1].textContent = 'Click to copy'; }, 1600); }
+      btn.addEventListener('click', function(){
+        if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(mail).then(function(){ done(true); }, function(){ done(fallback()); });
+        else done(fallback());
+      });
     })();
   </script>
   <script>
