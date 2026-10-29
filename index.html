@@ -72,7 +72,7 @@
     .principles p { margin-top: 16px; font-size: 14px; line-height: 1.75; opacity: .8; word-break: keep-all; }
     @media (max-width: 900px) { .principles { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 640px) { .about { padding: 80px 16px 96px; } .about .lead { margin-top: 44px; } .principles { grid-template-columns: 1fr; margin-top: 72px; } .hint { display: none; } }
-    .intro { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; background: var(--bg); cursor: pointer; transition: opacity .9s ease, visibility .9s; }
+    .intro { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; background: var(--bg); cursor: pointer; transition: opacity 1.5s ease, visibility 1.5s; }
     .intro.done { opacity: 0; visibility: hidden; pointer-events: none; }
     .intro video { display: block; width: min(36vw, 420px); aspect-ratio: 16 / 9; object-fit: cover; object-position: 50% 45%; filter: grayscale(1); background: #888; }
     .intro p { font-size: 15px; text-transform: none; letter-spacing: .02em; }
@@ -161,8 +161,8 @@
         else done(fallback());
       });
       var intro = document.getElementById('intro'), iv = intro.querySelector('video'), closed = false;
-      function closeIntro(){ if (closed) return; closed = true; intro.classList.add('done'); document.body.classList.remove('intro-on'); setTimeout(function(){ try { iv.pause(); } catch(e){} }, 900); }
-      iv.addEventListener('ended', closeIntro); iv.addEventListener('error', function(){ setTimeout(closeIntro, 1200); });
+      function closeIntro(){ if (closed) return; closed = true; intro.classList.add('done'); document.body.classList.remove('intro-on'); setTimeout(function(){ try { iv.pause(); } catch(e){} }, 1500); }
+      iv.addEventListener('timeupdate', function(){ if (iv.currentTime >= 2) closeIntro(); }); iv.addEventListener('ended', closeIntro); iv.addEventListener('error', function(){ setTimeout(closeIntro, 1200); });
       intro.addEventListener('click', closeIntro); setTimeout(closeIntro, 6000);
     })();
   </script>
