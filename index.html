@@ -21,20 +21,24 @@
       color: var(--fg);
       display: grid;
       place-items: center;
-            -webkit-font-smoothing: antialiased;
+      overflow: hidden;
     }
     h1 { line-height: 0; }
     .logo {
       display: block;
-      width: clamp(180px, 42vw, 420px);
+      width: clamp(220px, 50vw, 520px);
       height: auto;
       color: var(--fg);
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
     }
   </style>
 </head>
 <body>
   <h1>
-<svg class="logo" role="img" aria-label="h2w2" viewBox="0 0 334 121" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <svg class="logo" id="logo" role="img" aria-label="h2w2" viewBox="-30 -30 394 181" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <defs>
+        <g id="mark">
 <path d="M320.967 24.6523L320.967 33.3438H318.721L318.721 20.6484L321.504 20.6484L325.41 29.9258L329.316 20.6484L332.051 20.6484L332.051 33.3438H329.805L329.805 24.7256L325.996 33.3438H324.775L320.967 24.6523ZM310.42 22.6016L306.562 22.6016V20.6484L316.523 20.6484V22.6016L312.666 22.6016L312.666 33.3438H310.42L310.42 22.6016Z" fill="currentColor"/>
 <use xlink:href="#stroke0_872_2" fill="currentColor"/>
 <mask id="stroke1_872_2" fill="white">
@@ -62,7 +66,110 @@
 <path id="stroke4_872_2" d="M271.929 22.7754C278.207 22.8978 283.311 23.7016 287.916 26.454C294.014 30.1014 297.249 35.5557 297.649 42.5122C298.18 51.7435 293.971 59.0024 287.385 65.1214C281.779 70.331 274.955 73.4937 267.943 76.3444C264.66 77.681 261.338 79.0224 258.76 81.554C257.832 82.4658 257.005 83.5528 256.401 84.6975C255.502 86.3988 255.54 88.2129 256.767 89.7846C258.014 91.3804 259.801 91.8339 261.755 91.6131C264.548 91.2964 266.98 90.0366 269.332 88.6112C272.429 86.7323 275.462 84.7454 278.619 82.9697C282.722 80.6589 287.07 78.984 291.885 78.8832C294.72 78.8232 297.45 79.2431 299.87 80.8293C304.033 83.56 305.772 88.6472 304.356 93.8688C302.212 101.766 295.37 106.963 287.099 107.093C283.134 107.155 279.439 106.16 275.814 104.729C274.204 104.094 272.589 103.465 270.945 102.93C266.922 101.62 263.101 102.205 259.354 104.079C256.77 105.373 254.119 106.572 251.404 107.559C248.079 108.766 244.602 108.962 241.152 108.058C233.555 106.066 229.653 99.0016 231.882 91.3108C233.38 86.1324 236.486 82.0411 240.72 78.732C245.487 75.0054 250.96 72.5482 256.435 70.0766C260.506 68.2409 264.607 66.4388 268.547 64.3511C272.291 62.3666 275.501 59.6671 277.468 55.8061C278.823 53.1473 279.177 50.371 277.817 47.6186C275.87 43.6808 271.207 42.2219 267.043 44.132C264.388 45.351 262.451 47.3499 260.824 49.6847C259.839 51.0981 258.928 52.5666 257.914 53.9584C256.033 56.538 253.562 58.2825 250.288 58.5201C245.664 58.856 241.901 55.7293 240.992 50.8437C240.085 45.9773 241.435 41.5476 244.1 37.5162C249.442 29.4391 257.335 25.2158 266.668 23.3465C268.712 22.9362 270.831 22.8906 271.929 22.7778V22.7754Z"/>
 <path id="stroke6_872_2" d="M117.874 22.7754C124.55 22.9699 130.208 23.9783 135.026 27.6352C141.472 32.5286 143.838 39.1844 142.856 47.0071C141.684 56.3377 136.166 62.9695 128.827 68.3576C124.294 71.6855 119.191 73.9281 114.061 76.1515C111.344 77.328 108.69 78.687 106.132 80.1757C104.287 81.249 102.759 82.7761 101.94 84.8386C101.254 86.5674 101.133 88.2962 102.351 89.8425C103.643 91.4824 105.492 92.0803 107.425 91.5977C109.501 91.079 111.595 90.3635 113.462 89.3358C117.329 87.2109 121.002 84.745 124.844 82.5696C128.36 80.5791 132.104 79.0784 136.236 79.0448C144.568 78.9752 149.886 85.8639 147.739 93.8667C145.039 103.932 135.135 109.298 124.781 106.23C122.671 105.606 120.608 104.777 118.592 103.891C113.851 101.805 109.226 101.651 104.592 104.237C101.223 106.119 97.7306 107.8 93.8593 108.379C89.6233 109.01 85.5684 108.494 82.0545 105.819C77.9031 102.659 76.5193 98.3231 77.2897 93.3673C78.2533 87.1557 81.7792 82.4327 86.6914 78.6582C91.0795 75.2847 96.0328 72.9004 101.044 70.6122C105.314 68.6649 109.627 66.7825 113.766 64.5855C117.713 62.4917 121.113 59.6681 123.11 55.5166C124.074 53.5141 124.419 51.4107 123.897 49.2161C122.743 44.3828 117.5 41.9985 112.701 44.109C109.905 45.3384 107.963 47.4946 106.277 49.9269C105.227 51.4395 104.299 53.0459 103.155 54.4841C100.81 57.4374 97.7716 59.111 93.8979 58.4507C90.0894 57.8 87.3773 54.6114 86.8098 50.4743C86.1601 45.7274 87.4353 41.415 90.0218 37.4916C95.4073 29.3183 103.403 25.1885 112.779 23.3421C114.701 22.9627 116.686 22.9002 117.87 22.7754H117.874Z"/>
 </defs>
-</svg>
+        </g>
+        <radialGradient id="spotGrad">
+          <stop offset="0" stop-color="#fff" stop-opacity="1"/>
+          <stop offset="0.35" stop-color="#fff" stop-opacity="0.9"/>
+          <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+        <mask id="spotMask" maskUnits="userSpaceOnUse" x="-30" y="-30" width="394" height="181">
+          <circle id="spot" cx="167" cy="60" r="0" fill="url(#spotGrad)"/>
+        </mask>
+        <filter id="bleed" filterUnits="userSpaceOnUse" x="-30" y="-30" width="394" height="181" color-interpolation-filters="sRGB">
+          <feTurbulence id="noise" type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="4" result="noise"/>
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="soft"/>
+          <feDisplacementMap id="disp" in="soft" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" result="wobble"/>
+          <feComponentTransfer in="wobble">
+            <feFuncA type="linear" slope="2.1"/>
+          </feComponentTransfer>
+        </filter>
+        <filter id="ink" filterUnits="userSpaceOnUse" x="-30" y="-30" width="394" height="181" color-interpolation-filters="sRGB">
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="22" intercept="-7.6"/>
+          </feComponentTransfer>
+        </filter>
+      </defs>
+      <use href="#mark" xlink:href="#mark"/>
+      <g filter="url(#ink)">
+        <g mask="url(#spotMask)">
+          <use href="#mark" xlink:href="#mark" filter="url(#bleed)"/>
+        </g>
+      </g>
+    </svg>
   </h1>
+  <script>
+    (function () {
+      var svg = document.getElementById('logo');
+      var spot = document.getElementById('spot');
+      var disp = document.getElementById('disp');
+      var noise = document.getElementById('noise');
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      var target = { x: 167, y: 60, r: 0 };
+      var cur = { x: 167, y: 60, r: 0 };
+      var hovering = false, running = false, t = 0;
+      var MAX_R = reduce ? 0 : 62;
+
+      function toSvg(e) {
+        var pt = svg.createSVGPoint();
+        pt.x = e.clientX; pt.y = e.clientY;
+        var m = svg.getScreenCTM();
+        return m ? pt.matrixTransform(m.inverse()) : { x: 167, y: 60 };
+      }
+
+      function frame() {
+        t += 1;
+        var k = 0.14;
+        cur.x += (target.x - cur.x) * k;
+        cur.y += (target.y - cur.y) * k;
+        cur.r += (target.r - cur.r) * (hovering ? 0.08 : 0.06);
+
+        spot.setAttribute('cx', cur.x.toFixed(2));
+        spot.setAttribute('cy', cur.y.toFixed(2));
+        spot.setAttribute('r', Math.max(0, cur.r).toFixed(2));
+
+        var amt = cur.r / (MAX_R || 1);
+        disp.setAttribute('scale', (amt * 10).toFixed(2));
+        var f = 0.045 + Math.sin(t * 0.025) * 0.006 * amt;
+        noise.setAttribute('baseFrequency', f.toFixed(4));
+
+        if (!hovering && cur.r < 0.3) {
+          cur.r = 0;
+          spot.setAttribute('r', '0');
+          disp.setAttribute('scale', '0');
+          running = false;
+          return;
+        }
+        requestAnimationFrame(frame);
+      }
+
+      function start() {
+        if (!running) { running = true; requestAnimationFrame(frame); }
+      }
+
+      function move(e) {
+        var p = toSvg(e);
+        if (!hovering) { cur.x = p.x; cur.y = p.y; }
+        target.x = p.x; target.y = p.y;
+        hovering = true;
+        target.r = MAX_R;
+        start();
+      }
+
+      function leave() {
+        hovering = false;
+        target.r = 0;
+        start();
+      }
+
+      if (MAX_R > 0) {
+        svg.addEventListener('pointermove', move);
+        svg.addEventListener('pointerdown', move);
+        svg.addEventListener('pointerleave', leave);
+        svg.addEventListener('pointercancel', leave);
+        svg.addEventListener('pointerup', function (e) { if (e.pointerType !== 'mouse') leave(); });
+      }
+    })();
+  </script>
 </body>
 </html>
