@@ -82,15 +82,15 @@
       // 1) 렌즈: 커서 쪽으로 글자가 부풀어 오름
       '  vec2 lens = (uv - mouse) * s * 0.45;',
       // 2) 끌림: 마우스가 움직인 방향으로 글자가 늘어지며 따라옴
-      '  vec2 drag = vel * s * 1.15;',
+      '  vec2 drag = vel * s * 1.0;',
       // 3) 소용돌이: 액체처럼 천천히 출렁임
       '  vec2 q = uv*vec2(aspect,1.0)*3.2;',
-      '  vec2 swirl = vec2(n(q + time*0.3), n(q + 17.3 - time*0.27)) - 0.5;',
+      '  vec2 swirl = vec2(n(q + time*0.4), n(q + 17.3 - time*0.36)) - 0.5;',
       '  vec2 suv = uv - lens - drag + swirl * 0.06 * s;',
       '  float sharp = texture2D(sharpTex, suv).a;',
       '  float soft  = texture2D(softTex,  suv).a;',
       '  float wide  = texture2D(wideTex,  suv).a;',
-      '  float field = mix(sharp, max(soft * 2.0, wide * 1.75), s * 0.75);',
+      '  float field = mix(sharp, max(soft * 1.75, wide * 1.5), s * 0.7);',
       '  float w = fwidth(field) * 0.9 + 1e-4;',                     // 화면 픽셀 기준 안티에일리어싱
       '  float liquid = smoothstep(0.5 - w, 0.5 + w, field);',
       '  float a = mix(sharp, liquid, smoothstep(0.0, 0.12, s));',
@@ -181,12 +181,13 @@
 
     // 끈적한 스프링: 효과 중심이 마우스를 늦게 따라오고, 멈추면 몇 번 출렁이다 멈춤
     var spring = { vx: 0, vy: 0 }, last = 0, acc = 0;
-    var K = 0.032, DAMP = 0.9, VMAX = 0.11;
+    var K = 0.012, DAMP = 0.955, VMAX = 0.13; // K: 무게감(작을수록 묵직), DAMP: 출렁임 지속(1에 가까울수록 오래)
     function step(){
       spring.vx = (spring.vx + (mouse.x - cur.x) * K) * DAMP;
       spring.vy = (spring.vy + (mouse.y - cur.y) * K) * DAMP;
       cur.x += spring.vx; cur.y += spring.vy;
-      vel.x = spring.vx * 7; vel.y = spring.vy * 7;
+      // 늘어짐: 액체가 커서를 늦게 따라오는 만큼 글자가 커서 쪽으로 끈적하게 늘어남
+      vel.x = (mouse.x - cur.x) * 0.55; vel.y = (mouse.y - cur.y) * 0.55;
       var vm = Math.sqrt(vel.x*vel.x + vel.y*vel.y);
       if (vm > VMAX) { vel.x *= VMAX / vm; vel.y *= VMAX / vm; }
       cur.r += (targetR - cur.r) * (hovering ? 0.05 : 0.022);
@@ -196,7 +197,7 @@
       acc += Math.min(100, last ? now - last : 16.7); last = now;
       while (acc >= 16.7) { step(); acc -= 16.7; }
       draw(now);
-      var still = Math.abs(spring.vx) + Math.abs(spring.vy) < 2e-5;
+      var still = Math.abs(spring.vx) + Math.abs(spring.vy) + Math.abs(mouse.x - cur.x) + Math.abs(mouse.y - cur.y) < 4e-4;
       if (!hovering && cur.r < 0.002 && still) { cur.r = 0; draw(now); running = false; last = 0; acc = 0; return; }
       requestAnimationFrame(frame);
     }
