@@ -32,6 +32,9 @@
     .card { display: block; }
     .thumb { position: relative; aspect-ratio: 4 / 3; background: var(--muted); display: grid; place-items: center; overflow: hidden; }
     .thumb .word { font-size: clamp(28px, 4vw, 52px); font-weight: 500; letter-spacing: -.02em; }
+    .thumb canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; }
+    .thumb .word { transition: opacity .6s; } .thumb.loaded .word { opacity: 0; }
+    .thumb .tag { z-index: 1; }
     .thumb.soon .word { opacity: .35; }
     .thumb .tag { position: absolute; left: 16px; top: 14px; font-size: 12px; text-transform: uppercase; opacity: .6; }
     .meta { display: flex; justify-content: space-between; gap: 16px; margin-top: 16px; border-top: 1px solid currentColor; padding-top: 14px; }
@@ -67,7 +70,7 @@
     <p class="ko">h2w2&#xAC00; &#xB9CC;&#xB4E0;, &#xADF8;&#xB9AC;&#xACE0; &#xB9CC;&#xB4E4;&#xACE0; &#xC788;&#xB294; &#xAC83;&#xB4E4;.</p>
     <ol class="list">
       <li class="card">
-        <div class="thumb"><span class="tag">01</span><span class="word">re:floss</span></div>
+        <div class="thumb" id="refloss3d"><span class="tag">01</span><span class="word">re:floss</span></div>
         <div class="meta"><h2>re:floss</h2><span class="yr">Reusable floss holder</span></div>
         <p class="desc">A reusable floss holder that rethinks the throwaway floss pick. Bronze Prize, Korea Design Exhibition.</p>
         <p class="ko">&#xB2E4;&#xD68C;&#xC6A9; &#xCE58;&#xC2E4; &#xD640;&#xB354;. &#xC4F0;&#xACE0; &#xBC84;&#xB9AC;&#xB294; &#xCE58;&#xC2E4;&#xC758; &#xBC29;&#xC2DD;&#xC744; &#xB2E4;&#xC2DC; &#xC0DD;&#xAC01;&#xD588;&#xC2B5;&#xB2C8;&#xB2E4;. &#xB300;&#xD55C;&#xBBFC;&#xAD6D;&#xB514;&#xC790;&#xC778;&#xC804;&#xB78C;&#xD68C; &#xB3D9;&#xC0C1; &#xC218;&#xC0C1;&#xC791;.</p>
@@ -96,6 +99,39 @@
         else done(fallback());
       });
     })();
+  </script>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm';
+    const box = document.getElementById('refloss3d');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    box.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(26, 4 / 3, 1, 5000);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9a94, 2.2));
+    const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(120, 220, 260); scene.add(key);
+    const rim = new THREE.DirectionalLight(0xffffff, 0.8); rim.position.set(-200, -60, -120); scene.add(rim);
+    const pivot = new THREE.Group(); scene.add(pivot);
+    const BASE = { x: 0.45, y: -0.55, z: 0.32 };
+    const target = { x: BASE.x, y: BASE.y }, cur = { x: BASE.x, y: BASE.y };
+    let radius = 100, running = false;
+    function resize(){ const w = box.clientWidth, h = box.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; const fit = radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)); camera.position.set(0, 0, fit * (camera.aspect < 1 ? 1.25 / camera.aspect : 1.05)); camera.lookAt(0, 0, 0); camera.updateProjectionMatrix(); draw(); }
+    function draw(){ pivot.rotation.set(cur.x, cur.y, BASE.z); renderer.render(scene, camera); }
+    function tick(){ cur.x += (target.x - cur.x) * 0.08; cur.y += (target.y - cur.y) * 0.08; draw(); if (Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) > 0.0005) requestAnimationFrame(tick); else running = false; }
+    function go(){ if (!running) { running = true; requestAnimationFrame(tick); } }
+    box.addEventListener('pointermove', e => { const r = box.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5; target.y = BASE.y + px * 2.4; target.x = BASE.x + py * 1.6; go(); });
+    box.addEventListener('pointerleave', () => { target.x = BASE.x; target.y = BASE.y; go(); });
+    new GLTFLoader().load('/media/re_floss.glb', gltf => {
+      const obj = gltf.scene;
+      const mat = new THREE.MeshStandardMaterial({ color: 0xd6d6d1, roughness: 0.55, metalness: 0 });
+      obj.traverse(o => { if (o.isMesh) o.material = mat; });
+      const b = new THREE.Box3().setFromObject(obj); obj.position.sub(b.getCenter(new THREE.Vector3()));
+      radius = b.getBoundingSphere(new THREE.Sphere()).radius;
+      pivot.add(obj); box.classList.add('loaded'); resize();
+    });
+    new ResizeObserver(resize).observe(box);
   </script>
 </body>
 </html>
