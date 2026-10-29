@@ -70,23 +70,30 @@
       'precision highp float;',
       'varying vec2 uv;',
       'uniform sampler2D sharpTex; uniform sampler2D softTex; uniform sampler2D wideTex;',
-      'uniform vec2 mouse; uniform float radius; uniform float aspect; uniform float time; uniform vec3 color;',
+      'uniform vec2 mouse; uniform vec2 vel; uniform float radius; uniform float aspect; uniform float time; uniform vec3 color;',
       // 부드러운 저주파 노이즈 (값 노이즈, 보간)
       'float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }',
       'float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);',
       '  return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }',
       'void main(){',
       '  vec2 d = (uv - mouse) * vec2(aspect, 1.0);',
-      '  float s = 1.0 - smoothstep(0.0, radius, length(d));',  // 커서 영향 0~1
+      '  float s = 1.0 - smoothstep(0.0, radius, length(d));',      // 커서 영향 0~1
       '  s = s*s*(3.0-2.0*s);',
-      '  vec2 q = uv*vec2(aspect,1.0)*5.0;',
-      '  vec2 warp = vec2(n(q + time*0.25), n(q + 17.3 - time*0.2)) - 0.5;',
-      '  float soft = texture2D(softTex, uv + warp*0.012*s).a;',
-      '  float wide = texture2D(wideTex, uv + warp*0.012*s).a;',
-      '  float sharp = texture2D(sharpTex, uv).a;',
-      '  float field = mix(sharp, max(soft * 2.6, wide * 2.3), s);',            // 커서 가까울수록 번진 형태
-      '  float w = fwidth(field) * 0.9 + 1e-4;',                 // 화면 픽셀 기준 안티에일리어싱
-      '  float a = max(sharp, smoothstep(0.5 - w, 0.5 + w, field) * smoothstep(0.0, 0.12, s));',
+      // 1) 렌즈: 커서 쪽으로 글자가 부풀어 오름
+      '  vec2 lens = (uv - mouse) * s * 0.45;',
+      // 2) 끌림: 마우스가 움직인 방향으로 글자가 늘어지며 따라옴
+      '  vec2 drag = vel * s * 1.15;',
+      // 3) 소용돌이: 액체처럼 천천히 출렁임
+      '  vec2 q = uv*vec2(aspect,1.0)*3.2;',
+      '  vec2 swirl = vec2(n(q + time*0.45), n(q + 17.3 - time*0.4)) - 0.5;',
+      '  vec2 suv = uv - lens - drag + swirl * 0.06 * s;',
+      '  float sharp = texture2D(sharpTex, suv).a;',
+      '  float soft  = texture2D(softTex,  suv).a;',
+      '  float wide  = texture2D(wideTex,  suv).a;',
+      '  float field = mix(sharp, max(soft * 1.75, wide * 1.5), s * 0.7);',
+      '  float w = fwidth(field) * 0.9 + 1e-4;',                     // 화면 픽셀 기준 안티에일리어싱
+      '  float liquid = smoothstep(0.5 - w, 0.5 + w, field);',
+      '  float a = mix(sharp, liquid, smoothstep(0.0, 0.12, s));',
       '  gl_FragColor = vec4(color * a, a);',
       '}'
     ].join('\n');
@@ -99,7 +106,7 @@
     var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
     var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    var U = {}; ['sharpTex','softTex','wideTex','mouse','radius','aspect','time','color'].forEach(function(k){ U[k] = gl.getUniformLocation(prog, k); });
+    var U = {}; ['sharpTex','softTex','wideTex','mouse','vel','radius','aspect','time','color'].forEach(function(k){ U[k] = gl.getUniformLocation(prog, k); });
     gl.uniform1i(U.sharpTex, 0); gl.uniform1i(U.softTex, 1); gl.uniform1i(U.wideTex, 2);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -130,7 +137,7 @@
       return outImg;
     }
 
-    var mouse = { x: .5, y: .5 }, cur = { x: .5, y: .5, r: 0 }, targetR = 0, hovering = false, running = false;
+    var mouse = { x: .5, y: .5 }, vel = { x: 0, y: 0 }, cur = { x: .5, y: .5, r: 0 }, targetR = 0, hovering = false, running = false;
     var MAX_R = 0.42; // 번짐 반경(로고 높이 대비)
     var ready = false;
 
@@ -165,6 +172,7 @@
       if (!ready) return;
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniform2f(U.mouse, cur.x, cur.y);
+      gl.uniform2f(U.vel, vel.x, vel.y);
       gl.uniform1f(U.radius, cur.r);
       gl.uniform1f(U.time, now / 1000);
       gl.uniform3fv(U.color, fgColor());
@@ -172,10 +180,16 @@
     }
 
     function frame(now){
+      var px = cur.x, py = cur.y;
       cur.x += (mouse.x - cur.x) * 0.12; cur.y += (mouse.y - cur.y) * 0.12;
+      // 움직인 속도(부드럽게) — 멈추면 서서히 원래 자리로
+      vel.x += ((cur.x - px) * 6 - vel.x) * 0.18;
+      vel.y += ((cur.y - py) * 6 - vel.y) * 0.18;
+      var vm = Math.sqrt(vel.x*vel.x + vel.y*vel.y), VMAX = 0.085;
+      if (vm > VMAX) { vel.x *= VMAX / vm; vel.y *= VMAX / vm; }
       cur.r += (targetR - cur.r) * (hovering ? 0.07 : 0.05);
       draw(now);
-      if (!hovering && cur.r < 0.002) { cur.r = 0; draw(now); running = false; return; }
+      if (!hovering && cur.r < 0.002 && Math.abs(vel.x) + Math.abs(vel.y) < 1e-4) { cur.r = 0; draw(now); running = false; return; }
       requestAnimationFrame(frame);
     }
     function start(){ if (!running) { running = true; requestAnimationFrame(frame); } }
