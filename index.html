@@ -85,12 +85,12 @@
       '  vec2 drag = vel * s * 1.15;',
       // 3) 소용돌이: 액체처럼 천천히 출렁임
       '  vec2 q = uv*vec2(aspect,1.0)*3.2;',
-      '  vec2 swirl = vec2(n(q + time*0.45), n(q + 17.3 - time*0.4)) - 0.5;',
+      '  vec2 swirl = vec2(n(q + time*0.3), n(q + 17.3 - time*0.27)) - 0.5;',
       '  vec2 suv = uv - lens - drag + swirl * 0.06 * s;',
       '  float sharp = texture2D(sharpTex, suv).a;',
       '  float soft  = texture2D(softTex,  suv).a;',
       '  float wide  = texture2D(wideTex,  suv).a;',
-      '  float field = mix(sharp, max(soft * 1.75, wide * 1.5), s * 0.7);',
+      '  float field = mix(sharp, max(soft * 2.0, wide * 1.75), s * 0.75);',
       '  float w = fwidth(field) * 0.9 + 1e-4;',                     // 화면 픽셀 기준 안티에일리어싱
       '  float liquid = smoothstep(0.5 - w, 0.5 + w, field);',
       '  float a = mix(sharp, liquid, smoothstep(0.0, 0.12, s));',
@@ -179,23 +179,31 @@
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
-    function frame(now){
-      var px = cur.x, py = cur.y;
-      cur.x += (mouse.x - cur.x) * 0.12; cur.y += (mouse.y - cur.y) * 0.12;
-      // 움직인 속도(부드럽게) — 멈추면 서서히 원래 자리로
-      vel.x += ((cur.x - px) * 6 - vel.x) * 0.18;
-      vel.y += ((cur.y - py) * 6 - vel.y) * 0.18;
-      var vm = Math.sqrt(vel.x*vel.x + vel.y*vel.y), VMAX = 0.085;
+    // 끈적한 스프링: 효과 중심이 마우스를 늦게 따라오고, 멈추면 몇 번 출렁이다 멈춤
+    var spring = { vx: 0, vy: 0 }, last = 0, acc = 0;
+    var K = 0.032, DAMP = 0.9, VMAX = 0.11;
+    function step(){
+      spring.vx = (spring.vx + (mouse.x - cur.x) * K) * DAMP;
+      spring.vy = (spring.vy + (mouse.y - cur.y) * K) * DAMP;
+      cur.x += spring.vx; cur.y += spring.vy;
+      vel.x = spring.vx * 7; vel.y = spring.vy * 7;
+      var vm = Math.sqrt(vel.x*vel.x + vel.y*vel.y);
       if (vm > VMAX) { vel.x *= VMAX / vm; vel.y *= VMAX / vm; }
-      cur.r += (targetR - cur.r) * (hovering ? 0.07 : 0.05);
+      cur.r += (targetR - cur.r) * (hovering ? 0.05 : 0.022);
+    }
+    function frame(now){
+      // 화면 주사율(60/120Hz)과 상관없이 같은 속도로 움직이도록 고정 간격으로 계산
+      acc += Math.min(100, last ? now - last : 16.7); last = now;
+      while (acc >= 16.7) { step(); acc -= 16.7; }
       draw(now);
-      if (!hovering && cur.r < 0.002 && Math.abs(vel.x) + Math.abs(vel.y) < 1e-4) { cur.r = 0; draw(now); running = false; return; }
+      var still = Math.abs(spring.vx) + Math.abs(spring.vy) < 2e-5;
+      if (!hovering && cur.r < 0.002 && still) { cur.r = 0; draw(now); running = false; last = 0; acc = 0; return; }
       requestAnimationFrame(frame);
     }
     function start(){ if (!running) { running = true; requestAnimationFrame(frame); } }
 
     function pos(e){ var r = stage.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; }
-    function move(e){ var p = pos(e); if (!hovering) { cur.x = p.x; cur.y = p.y; } mouse = p; hovering = true; targetR = MAX_R; start(); }
+    function move(e){ var p = pos(e); if (!hovering && cur.r < 0.01) { cur.x = p.x; cur.y = p.y; spring.vx = spring.vy = 0; } mouse = p; hovering = true; targetR = MAX_R; start(); }
     function leave(){ hovering = false; targetR = 0; start(); }
 
     stage.addEventListener('pointermove', move);
