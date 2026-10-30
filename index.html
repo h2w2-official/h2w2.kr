@@ -83,6 +83,10 @@
     body.intro-on { overflow: hidden; }
     @media (max-width: 640px) { .intro video { width: 64vw; } .intro p { font-size: 13px; } }
     .stage, .hint { z-index: 1; }
+    /* location label, top centre (ref: bpco.kr) */
+    .loc { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 6px; text-transform: none; white-space: nowrap; pointer-events: none; }
+    .loc .globe { width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 1.1; }
+    @media (max-width: 480px) { .loc { display: none; } }
   </style>
 </head>
 <body class="intro-on">
@@ -91,6 +95,7 @@
     <p><span class="l1">from have to,</span> <span class="l2">to want to.</span></p>
   </div>
   <header class="bar">
+    <div class="loc"><svg class="globe" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6"/><ellipse cx="8" cy="8" rx="2.9" ry="6.6"/><path d="M1.4 8h13.2M2.5 4.6h11M2.5 11.4h11"/></svg><span>Seoul, Korea</span></div>
     <div class="clock" aria-label="현재 시간"><span class="dot" aria-hidden="true"></span><span id="clock">REC</span></div>
     <nav>
       <a class="roll" href="/work.html" aria-label="Work"><span>Work</span><span aria-hidden="true">Work</span></a>
