@@ -2,8 +2,8 @@
 (function () {
   var SRC = ['/media/logo/have.svg', '/media/logo/want.svg', '/media/logo/h2w2.svg'];
   var VB = { w: 394, h: 181 };                // frame the logos are centered in
-  var HOLD_FIRST = 0, MORPH = 8000;          // MORPH = time per step (whole animation = 2 x MORPH)
-  var WANT = 0.3;                             // speed while passing 'want' (0 = stops there, 1 = barely slows)
+  var HOLD_FIRST = 0, MORPH = 8000;          // MORPH = time per step; loop have->want->h2w2->have = 3 x MORPH
+  var WANT = 0.3;                             // speed while passing each word (0 = stops there, 1 = barely slows)
   var RES = 2;                                // render resolution multiplier (higher = sharper, slower to load)
   var HOVER = false;                          // cursor liquid after the sequence (off for now)
   var stage = document.getElementById('stage');
@@ -55,12 +55,13 @@
   gl.uniform1i(U.sA, 0); gl.uniform1i(U.oA, 1); gl.uniform1i(U.wA, 2); gl.uniform1i(U.dA, 3); gl.uniform1i(U.dB, 4);
   gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-  var texs = [0,1,2,3,4].map(function(unit){ var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+  var texs = [0,1,2,3,4,5].map(function(unit){ var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); return t; });
   function upload(unit, img){ gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, texs[unit]); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img); }
-  function setA(set){ upload(0, set.sharp); upload(1, set.soft); upload(2, set.wide); upload(3, set.sdf); }
-  function setB(set){ upload(4, set.sdf); }
+  // distance fields of have / want / h2w2 live on texture units 3 / 4 / 5; a morph just points dA/dB at two of them
+  function useA(i){ gl.uniform1i(U.dA, 3 + i); }
+  function useB(i){ gl.uniform1i(U.dB, 3 + i); }
 
   // alpha-channel gaussian blur (3 box passes)
   function blurAlpha(src, W, H, r){
@@ -157,7 +158,8 @@
 
   var mouse = { x: .5, y: .5 }, vel = { x: 0, y: 0 }, cur = { x: .5, y: .5, r: 0 }, targetR = 0, hovering = false, running = false;
   var MAX_R = 0.42, ready = false, morph = 0, wob = 0, mo = 1;
-  var seq = 0;           // 0 have, 1 want, 2 h2w2 (final, interactive)
+  var seq = 0;           // hover only (unused while the loop runs)
+  var seg = 0;           // current step: from word seg % 3 to word (seg + 1) % 3
   function fgColor(){ var c = getComputedStyle(stage).color.match(/\d+(\.\d+)?/g) || [17,17,17]; return [c[0]/255, c[1]/255, c[2]/255]; }
 
   function build(){
@@ -165,7 +167,8 @@
     W = Math.max(2, Math.round(rect.width * dpr)); H = Math.max(2, Math.round(rect.height * dpr));
     canvas.width = W; canvas.height = H; gl.viewport(0, 0, W, H); gl.uniform1f(U.aspect, W / H);
     return Promise.all(svgs.map(makeSet)).then(function(s){
-      sets = s; setA(sets[seq]); setB(sets[Math.min(seq + 1, 2)]);
+      sets = s; upload(0, s[0].sharp); upload(1, s[0].soft); upload(2, s[0].wide);
+      s.forEach(function(x, i){ upload(3 + i, x.sdf); }); useA(seg % 3); useB((seg + 1) % 3);
       ready = true; draw(performance.now()); stage.classList.add('gl');
     });
   }
@@ -180,26 +183,21 @@
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
-  // intro sequence: have -> (pause) want -> h2w2. Drawn from the same distance fields the
-  // whole time (never swapped for the sharp texture), so nothing flashes; the last frame is kept.
-  // one continuous path have(0) -> want(1) -> h2w2(2): starts and ends at rest, slows down
-  // around 'want' without ever stopping (speed there = WANT relative to the rest).
-  function path(t){
+  // endless loop have -> want -> h2w2 -> have ... drawn from the distance fields the whole time,
+  // so nothing flashes. Each step slows down (never stops) as it passes a word: speed there = WANT.
+  function ease(p){
     var m = WANT, TAU = 2 * Math.PI;
-    var x = (t / 2 - Math.sin(2 * TAU * t) / (4 * TAU)) + m * (t / 2 - Math.sin(TAU * t) / (2 * TAU));
-    return 2 * x / ((1 + m) / 2);
+    return (m * p + (1 - m) * (p / 2 - Math.sin(TAU * p) / (2 * TAU))) / (m + (1 - m) / 2);
   }
   function runSequence(){
     setTimeout(function(){
-      var start = performance.now();
+      var start = performance.now(), last = -1;
       (function tick(now){
-        var t = Math.min(1, (now - start) / (2 * MORPH)), P = Math.min(2, path(t));
-        if (P >= 1 && seq === 0) { seq = 1; setA(sets[1]); setB(sets[2]); }
-        morph = seq === 0 ? P : Math.min(1, P - 1);
-        wob = Math.sin(Math.PI * morph); mo = 1;
+        var e = now - start, k = Math.floor(e / MORPH), p = (e - k * MORPH) / MORPH;
+        if (k !== last) { last = k; seg = k; useA(k % 3); useB((k + 1) % 3); }
+        morph = ease(p); wob = Math.sin(Math.PI * morph); mo = 1;
         draw(now);
-        if (t < 1) requestAnimationFrame(tick);
-        else { seq = 2; morph = 1; wob = 0; draw(now); }  // stays on this frame
+        requestAnimationFrame(tick);
       })(start);
     }, HOLD_FIRST);
   }
