@@ -2,7 +2,7 @@
 (function () {
   var SRC = ['/media/logo/have.svg', '/media/logo/want.svg', '/media/logo/h2w2.svg'];
   var VB = { w: 394, h: 181 };                // frame the logos are centered in
-  var HOLD_FIRST = 0, MORPH = 7000, HOLD = 500; // MORPH = time per step (slow-in, steady, slow-out); HOLD = pause on want
+  var HOLD_FIRST = 0, MORPH = 7000, HOLD = 1000; // MORPH = time per step (slow-in, steady, slow-out); HOLD = pause on want
   var HOVER = false;                          // cursor liquid after the sequence (off for now)
   var stage = document.getElementById('stage');
   var canvas = document.getElementById('fx');
@@ -162,7 +162,7 @@
 
   // intro sequence: have -> (pause) want -> h2w2. Drawn from the same distance fields the
   // whole time (never swapped for the sharp texture), so nothing flashes; the last frame is kept.
-  var RAMP = 0.25;  // share of each step spent speeding up / slowing down
+  var RAMP = 0.5;   // share of each step spent speeding up / slowing down
   function ease(p){ var v = 1 / (1 - RAMP);
     if (p < RAMP) return v * p * p / (2 * RAMP);
     if (p > 1 - RAMP) return 1 - v * (1 - p) * (1 - p) / (2 * RAMP);
@@ -180,9 +180,17 @@
         }
         mo = 1; draw(now);
         if (seq < 1 || p < 1) requestAnimationFrame(tick);
-        else { seq = 2; morph = 1; wob = 0; draw(now); }
+        else { seq = 2; morph = 1; wob = 0; draw(now); toVector(); }
       })(start);
     }, HOLD_FIRST);
+  }
+  // after the morph, cross-fade the canvas into the real SVG so the final logo stays sharp at any zoom
+  function toVector(){
+    var img = stage.querySelector('.logo-static'); if (!img) return;
+    img.style.transition = 'opacity .5s ease'; img.style.opacity = '0'; img.style.visibility = 'visible';
+    img.getBoundingClientRect();
+    img.style.opacity = '1';
+    setTimeout(function(){ canvas.style.visibility = 'hidden'; }, 550);
   }
   function whenIntroGone(cb){
     if (!document.body.classList.contains('intro-on')) return cb();
