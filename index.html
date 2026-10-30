@@ -74,10 +74,10 @@
     @media (max-width: 640px) { .about { padding: 80px 16px 96px; } .about .lead { margin-top: 44px; } .principles { grid-template-columns: 1fr; margin-top: 72px; } .hint { display: none; } }
     .intro { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; background: var(--bg); cursor: pointer; transition: opacity 1.5s ease, visibility 1.5s; }
     .intro.done { opacity: 0; visibility: hidden; pointer-events: none; }
-    .intro video { display: block; width: min(36vw, 420px); aspect-ratio: 16 / 9; object-fit: cover; object-position: 50% 45%; filter: grayscale(1); background: #888; clip-path: inset(0 0 0 0); transition: clip-path .8s cubic-bezier(.76,0,.24,1); }
+    .intro video { display: block; width: min(36vw, 420px); aspect-ratio: 16 / 9; object-fit: cover; object-position: 50% 45%; filter: grayscale(1); background: #888; opacity: 0; clip-path: inset(0 0 0 0); transition: opacity .6s ease, clip-path .8s cubic-bezier(.76,0,.24,1); }
     .intro p { font-size: 15px; text-transform: none; letter-spacing: .02em; }
     .intro p span { opacity: 0; transition: opacity .7s ease; }
-    .intro.t1 .l1, .intro.t2 .l2 { opacity: 1; }
+    .intro.t0 video, .intro.t1 .l1, .intro.t2 .l2 { opacity: 1; }
     .intro.closing video { clip-path: inset(50% 0 50% 0); }   /* collapses top & bottom into the centre line */
     .intro.closing p .l1, .intro.closing p .l2 { opacity: 0; transition-duration: .6s; }
     body.intro-on { overflow: hidden; }
@@ -165,8 +165,9 @@
         else done(fallback());
       });
       var intro = document.getElementById('intro'), iv = intro.querySelector('video'), closed = false;
-      setTimeout(function(){ intro.classList.add('t1'); }, 150);   // 'from have to,' fades in
-      setTimeout(function(){ intro.classList.add('t2'); }, 900);   // then 'to want to.'
+      setTimeout(function(){ intro.classList.add('t0'); }, 30);    // video fades in first
+      setTimeout(function(){ intro.classList.add('t1'); }, 600);   // then 'from have to,'
+      setTimeout(function(){ intro.classList.add('t2'); }, 1150);  // then 'to want to.'
       function closeIntro(){ if (closed) return; closed = true; intro.classList.add('closing');   // video folds shut, text fades out
         setTimeout(function(){ intro.classList.add('done'); document.body.classList.remove('intro-on'); setTimeout(function(){ try { iv.pause(); } catch(e){} }, 1500); }, 800); }
       iv.addEventListener('timeupdate', function(){ if (iv.currentTime >= 2) closeIntro(); }); iv.addEventListener('ended', closeIntro); iv.addEventListener('error', function(){ setTimeout(closeIntro, 1200); });
