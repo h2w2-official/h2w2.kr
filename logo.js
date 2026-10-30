@@ -2,7 +2,8 @@
 (function () {
   var SRC = ['/media/logo/have.svg', '/media/logo/want.svg', '/media/logo/h2w2.svg'];
   var VB = { w: 394, h: 181 };                // frame the logos are centered in
-  var HOLD_FIRST = 0, MORPH = 7000, HOLD = 1000; // MORPH = time per step (slow-in, steady, slow-out); HOLD = pause on want
+  var HOLD_FIRST = 0, MORPH = 8000, HOLD = 0; // MORPH = time per step (slow-in, slow-out); HOLD = pause on want (0 = none)
+  var RES = 2;                                // render resolution multiplier (higher = sharper, slower to load)
   var HOVER = false;                          // cursor liquid after the sequence (off for now)
   var stage = document.getElementById('stage');
   var canvas = document.getElementById('fx');
@@ -115,6 +116,7 @@
   }
 
   var svgs = null, sets = null, W = 0, H = 0;
+  var staticImg = stage.querySelector('.logo-static'); if (staticImg) staticImg.style.visibility = 'hidden'; // no h2w2 before 'have'
   function rasterize(svgText, cw, ch){
     return new Promise(function(res){
       var m = svgText.match(/viewBox="([^"]+)"/)[1].split(/\s+/).map(Number), lw = m[2], lh = m[3];
@@ -128,10 +130,27 @@
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
     });
   }
+  // distance fields are computed in background workers so the intro video never stutters
+  var workerURL = null;
+  try { workerURL = URL.createObjectURL(new Blob([edt1.toString(), edt.toString(), sdfImage.toString(),
+    'onmessage=function(e){var d=e.data,o=sdfImage(d.px,d.W,d.H,d.spread);postMessage(o,[o.data.buffer]);};'], { type: 'text/javascript' })); } catch (e) {}
+  function sdfAsync(px, w, h, spread){
+    return new Promise(function(res){
+      var wk = null; try { wk = workerURL && new Worker(workerURL); } catch (e) {}
+      if (!wk) return res(sdfImage(px, w, h, spread));
+      wk.onmessage = function(e){ wk.terminate(); res(e.data); };
+      wk.onerror = function(){ wk.terminate(); res(sdfImage(px, w, h, spread)); };
+      wk.postMessage({ px: px, W: w, H: h, spread: spread });
+    });
+  }
   function makeSet(svgText){
     var hw = Math.max(2, Math.round(W / 2)), hh = Math.max(2, Math.round(H / 2));
-    return Promise.all([rasterize(svgText, W, H), rasterize(svgText, hw, hh)]).then(function(r){
-      return { sharp: r[0], soft: blurAlpha(r[1].data, hw, hh, Math.max(1, Math.round(hh * 0.035))), wide: blurAlpha(r[1].data, hw, hh, Math.max(2, Math.round(hh * 0.06))), sdf: sdfImage(r[0].data, W, H, Math.max(8, H * 0.12)) };
+    return Promise.all([rasterize(svgText, W, H), HOVER ? rasterize(svgText, hw, hh) : null]).then(function(r){
+      return sdfAsync(new Uint8ClampedArray(r[0].data), W, H, Math.max(8, H * 0.12)).then(function(sdf){
+        return { sharp: r[0], sdf: sdf,
+          soft: HOVER ? blurAlpha(r[1].data, hw, hh, Math.max(1, Math.round(hh * 0.035))) : new ImageData(1, 1),
+          wide: HOVER ? blurAlpha(r[1].data, hw, hh, Math.max(2, Math.round(hh * 0.06))) : new ImageData(1, 1) };
+      });
     });
   }
 
@@ -141,7 +160,7 @@
   function fgColor(){ var c = getComputedStyle(stage).color.match(/\d+(\.\d+)?/g) || [17,17,17]; return [c[0]/255, c[1]/255, c[2]/255]; }
 
   function build(){
-    var rect = stage.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var rect = stage.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2) * RES;
     W = Math.max(2, Math.round(rect.width * dpr)); H = Math.max(2, Math.round(rect.height * dpr));
     canvas.width = W; canvas.height = H; gl.viewport(0, 0, W, H); gl.uniform1f(U.aspect, W / H);
     return Promise.all(svgs.map(makeSet)).then(function(s){
@@ -162,21 +181,18 @@
 
   // intro sequence: have -> (pause) want -> h2w2. Drawn from the same distance fields the
   // whole time (never swapped for the sharp texture), so nothing flashes; the last frame is kept.
-  var RAMP = 0.5;   // share of each step spent speeding up / slowing down
-  function ease(p){ var v = 1 / (1 - RAMP);
-    if (p < RAMP) return v * p * p / (2 * RAMP);
-    if (p > 1 - RAMP) return 1 - v * (1 - p) * (1 - p) / (2 * RAMP);
-    return v * (RAMP / 2 + p - RAMP); }
+  var RAMP = 3;     // slow-in/slow-out strength: 2 = gentle, 3-4 = lingers longer on each word
+  function ease(p){ return p < .5 ? Math.pow(2 * p, RAMP) / 2 : 1 - Math.pow(2 * (1 - p), RAMP) / 2; }
   function runSequence(){
     setTimeout(function(){
       var start = performance.now();
       (function tick(now){
         var e = now - start, p;
-        if (e < MORPH) { p = e / MORPH; morph = ease(p); wob = Math.sin(Math.PI * p); }
+        if (e < MORPH) { p = e / MORPH; morph = ease(p); wob = Math.sin(Math.PI * morph); }
         else if (e < MORPH + HOLD) { morph = 1; wob = 0; }
         else {
           if (seq === 0) { seq = 1; setA(sets[1]); setB(sets[2]); }
-          p = Math.min(1, (e - MORPH - HOLD) / MORPH); morph = ease(p); wob = Math.sin(Math.PI * p);
+          p = Math.min(1, (e - MORPH - HOLD) / MORPH); morph = ease(p); wob = Math.sin(Math.PI * morph);
         }
         mo = 1; draw(now);
         if (seq < 1 || p < 1) requestAnimationFrame(tick);
@@ -233,5 +249,5 @@
   Promise.all(SRC.map(function(u){ return fetch(u).then(function(r){ return r.text(); }); }))
     .then(function(t){ svgs = t; return build(); })
     .then(function(){ whenIntroGone(runSequence); })
-    .catch(function(){ /* keep static logo */ });
+    .catch(function(){ if (staticImg) staticImg.style.visibility = ''; /* keep static logo */ });
 })();
