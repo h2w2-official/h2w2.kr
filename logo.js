@@ -2,7 +2,7 @@
 (function () {
   var SRC = ['/media/logo/have.svg', '/media/logo/want.svg', '/media/logo/h2w2.svg'];
   var VB = { w: 394, h: 181 };                // frame the logos are centered in
-  var HOLD_FIRST = 0, MORPH = 7000;          // MORPH = time per step; have->want->h2w2 runs as one continuous motion
+  var HOLD_FIRST = 0, MORPH = 7000, HOLD = 500; // MORPH = time per step (slow-in, steady, slow-out); HOLD = pause on want
   var HOVER = false;                          // cursor liquid after the sequence (off for now)
   var stage = document.getElementById('stage');
   var canvas = document.getElementById('fx');
@@ -131,7 +131,7 @@
   function makeSet(svgText){
     var hw = Math.max(2, Math.round(W / 2)), hh = Math.max(2, Math.round(H / 2));
     return Promise.all([rasterize(svgText, W, H), rasterize(svgText, hw, hh)]).then(function(r){
-      return { sharp: r[0], soft: blurAlpha(r[1].data, hw, hh, Math.max(1, Math.round(hh * 0.035))), wide: blurAlpha(r[1].data, hw, hh, Math.max(2, Math.round(hh * 0.06))), sdf: sdfImage(r[1].data, hw, hh, Math.max(4, hh * 0.12)) };
+      return { sharp: r[0], soft: blurAlpha(r[1].data, hw, hh, Math.max(1, Math.round(hh * 0.035))), wide: blurAlpha(r[1].data, hw, hh, Math.max(2, Math.round(hh * 0.06))), sdf: sdfImage(r[0].data, W, H, Math.max(8, H * 0.12)) };
     });
   }
 
@@ -160,20 +160,27 @@
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
-  // intro sequence: have -> want -> h2w2 as one continuous motion (no swap to the sharp
-  // texture in between or at the end, so nothing flashes); the last frame is kept.
-  function ease(t){ return t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
+  // intro sequence: have -> (pause) want -> h2w2. Drawn from the same distance fields the
+  // whole time (never swapped for the sharp texture), so nothing flashes; the last frame is kept.
+  var RAMP = 0.25;  // share of each step spent speeding up / slowing down
+  function ease(p){ var v = 1 / (1 - RAMP);
+    if (p < RAMP) return v * p * p / (2 * RAMP);
+    if (p > 1 - RAMP) return 1 - v * (1 - p) * (1 - p) / (2 * RAMP);
+    return v * (RAMP / 2 + p - RAMP); }
   function runSequence(){
     setTimeout(function(){
-      var start = performance.now(), total = MORPH * 2;
+      var start = performance.now();
       (function tick(now){
-        var t = Math.min(1, (now - start) / total), P = 2 * ease(t);
-        if (P >= 1 && seq === 0) { seq = 1; setA(sets[1]); setB(sets[2]); }
-        morph = seq === 0 ? P : Math.min(1, P - 1);
-        wob = Math.sin(Math.PI * t); mo = 1;
-        draw(now);
-        if (t < 1) requestAnimationFrame(tick);
-        else { seq = 2; wob = 0; draw(now); }
+        var e = now - start, p;
+        if (e < MORPH) { p = e / MORPH; morph = ease(p); wob = Math.sin(Math.PI * p); }
+        else if (e < MORPH + HOLD) { morph = 1; wob = 0; }
+        else {
+          if (seq === 0) { seq = 1; setA(sets[1]); setB(sets[2]); }
+          p = Math.min(1, (e - MORPH - HOLD) / MORPH); morph = ease(p); wob = Math.sin(Math.PI * p);
+        }
+        mo = 1; draw(now);
+        if (seq < 1 || p < 1) requestAnimationFrame(tick);
+        else { seq = 2; morph = 1; wob = 0; draw(now); }
       })(start);
     }, HOLD_FIRST);
   }
