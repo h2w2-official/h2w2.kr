@@ -16,7 +16,7 @@
     body { background: var(--bg); color: var(--fg); font-family: "IBM Plex Mono", "IBM Plex Sans KR", ui-monospace, monospace; font-size: 13px; line-height: 1.4; letter-spacing: .02em; -webkit-font-smoothing: antialiased; min-height: 100svh; display: flex; flex-direction: column; }
     a { color: inherit; text-decoration: none; }
     .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 28px; text-transform: uppercase; }
-    nav { display: flex; gap: 24px; }
+    nav { display: flex; gap: 24px; text-transform: none; }
     .roll { position: relative; display: inline-block; overflow: hidden; height: 1.4em; vertical-align: top; }
     .roll > span { display: block; transition: transform .35s cubic-bezier(.65,0,.35,1); }
     .roll > span + span { position: absolute; left: 0; top: 100%; }
@@ -34,8 +34,7 @@
     .go .arrow { display: inline-block; transition: transform .3s; } .go:hover .arrow { transform: translateX(6px); }
     .thumb { position: relative; aspect-ratio: 4 / 3; background: var(--muted); display: grid; place-items: center; overflow: hidden; }
     .thumb .word { font-size: clamp(28px, 4vw, 52px); font-weight: 500; letter-spacing: -.02em; }
-    .thumb canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: pointer; transform: translateY(-1%);
-    .thumb .word { transition: opacity .6s; } .thumb.loaded .word { opacity: 0; } }
+    .thumb canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: pointer; transform: translateY(-1%); }
     .thumb .word { transition: opacity .6s; } .thumb.loaded .word { opacity: 0; }
     .thumb .tag { z-index: 1; }
     .thumb.soon .word { opacity: .35; }
@@ -64,7 +63,7 @@
     <a class="home roll" href="/" aria-label="h2w2 home"><span>h2w2™</span><span aria-hidden="true">h2w2™</span></a>
     <nav>
       <a class="roll on" href="/work.html" aria-current="page"><span>Work</span><span aria-hidden="true">Work</span></a>
-      <a class="roll" href="mailto:official@h2w2.kr"><span>Contact</span><span aria-hidden="true">Contact</span></a>
+      <a class="roll" href="/about.html"><span>About</span><span aria-hidden="true">About</span></a>
     </nav>
   </header>
   <main>
