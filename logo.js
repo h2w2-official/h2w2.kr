@@ -2,7 +2,8 @@
 (function () {
   var SRC = ['/media/logo/have.svg', '/media/logo/want.svg', '/media/logo/h2w2.svg'];
   var VB = { w: 394, h: 181 };                // frame the logos are centered in
-  var HOLD_FIRST = 0, MORPH = 8000, HOLD = 0; // MORPH = time per step (slow-in, slow-out); HOLD = pause on want (0 = none)
+  var HOLD_FIRST = 0, MORPH = 8000;          // MORPH = time per step (whole animation = 2 x MORPH)
+  var WANT = 0.3;                             // speed while passing 'want' (0 = stops there, 1 = barely slows)
   var RES = 2;                                // render resolution multiplier (higher = sharper, slower to load)
   var HOVER = false;                          // cursor liquid after the sequence (off for now)
   var stage = document.getElementById('stage');
@@ -181,32 +182,26 @@
 
   // intro sequence: have -> (pause) want -> h2w2. Drawn from the same distance fields the
   // whole time (never swapped for the sharp texture), so nothing flashes; the last frame is kept.
-  var RAMP = 3;     // slow-in/slow-out strength: 2 = gentle, 3-4 = lingers longer on each word
-  function ease(p){ return p < .5 ? Math.pow(2 * p, RAMP) / 2 : 1 - Math.pow(2 * (1 - p), RAMP) / 2; }
+  // one continuous path have(0) -> want(1) -> h2w2(2): starts and ends at rest, slows down
+  // around 'want' without ever stopping (speed there = WANT relative to the rest).
+  function path(t){
+    var m = WANT, TAU = 2 * Math.PI;
+    var x = (t / 2 - Math.sin(2 * TAU * t) / (4 * TAU)) + m * (t / 2 - Math.sin(TAU * t) / (2 * TAU));
+    return 2 * x / ((1 + m) / 2);
+  }
   function runSequence(){
     setTimeout(function(){
       var start = performance.now();
       (function tick(now){
-        var e = now - start, p;
-        if (e < MORPH) { p = e / MORPH; morph = ease(p); wob = Math.sin(Math.PI * morph); }
-        else if (e < MORPH + HOLD) { morph = 1; wob = 0; }
-        else {
-          if (seq === 0) { seq = 1; setA(sets[1]); setB(sets[2]); }
-          p = Math.min(1, (e - MORPH - HOLD) / MORPH); morph = ease(p); wob = Math.sin(Math.PI * morph);
-        }
-        mo = 1; draw(now);
-        if (seq < 1 || p < 1) requestAnimationFrame(tick);
-        else { seq = 2; morph = 1; wob = 0; draw(now); toVector(); }
+        var t = Math.min(1, (now - start) / (2 * MORPH)), P = Math.min(2, path(t));
+        if (P >= 1 && seq === 0) { seq = 1; setA(sets[1]); setB(sets[2]); }
+        morph = seq === 0 ? P : Math.min(1, P - 1);
+        wob = Math.sin(Math.PI * morph); mo = 1;
+        draw(now);
+        if (t < 1) requestAnimationFrame(tick);
+        else { seq = 2; morph = 1; wob = 0; draw(now); }  // stays on this frame
       })(start);
     }, HOLD_FIRST);
-  }
-  // after the morph, cross-fade the canvas into the real SVG so the final logo stays sharp at any zoom
-  function toVector(){
-    var img = stage.querySelector('.logo-static'); if (!img) return;
-    img.style.transition = 'opacity .5s ease'; img.style.opacity = '0'; img.style.visibility = 'visible';
-    img.getBoundingClientRect();
-    img.style.opacity = '1';
-    setTimeout(function(){ canvas.style.visibility = 'hidden'; }, 550);
   }
   function whenIntroGone(cb){
     if (!document.body.classList.contains('intro-on')) return cb();
