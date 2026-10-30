@@ -29,7 +29,7 @@
     .clock { font-variant-numeric: tabular-nums; white-space: nowrap; }
     .clock .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-right: 8px; vertical-align: 1px; animation: blink 1s steps(1) infinite; }
     @keyframes blink { 50% { opacity: 0; } }
-    nav { display: flex; gap: 24px; }
+    nav { display: flex; gap: 24px; text-transform: none; }
     /* 위아래로 굴러가는 호버 */
     .roll { position: relative; display: inline-block; overflow: hidden; height: 1.4em; vertical-align: top; }
     .roll > span { display: block; transition: transform .35s cubic-bezier(.65,0,.35,1); }
@@ -90,7 +90,7 @@
     <div class="clock" aria-label="현재 시간"><span class="dot" aria-hidden="true"></span><span id="clock">REC</span></div>
     <nav>
       <a class="roll" href="/work.html" aria-label="Work"><span>Work</span><span aria-hidden="true">Work</span></a>
-      <a class="roll" href="mailto:official@h2w2.kr" aria-label="Contact"><span>Contact</span><span aria-hidden="true">Contact</span></a>
+      <a class="roll" href="/about.html" aria-label="About"><span>About</span><span aria-hidden="true">About</span></a>
     </nav>
   </header>
   <main>
