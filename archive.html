@@ -52,10 +52,16 @@
     .names { list-style: none; border-top: 1px solid currentColor; display: grid; grid-template-columns: repeat(3, 1fr); }
     .names li { padding: 18px 0; border-bottom: 1px solid var(--muted); font-size: 15px; }
     @media (max-width: 640px) { .sec { margin-top: 64px; } .rows li { grid-template-columns: 64px 1fr; gap: 14px; } .rows .n { font-size: 14px; } .names { grid-template-columns: 1fr 1fr; } .names li { font-size: 14px; } }
+    /* location label, top centre (ref: bpco.kr) */
+    header.bar { position: relative; }
+    .loc { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 6px; text-transform: none; white-space: nowrap; pointer-events: none; }
+    .loc .globe { width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 1.1; }
+    @media (max-width: 480px) { .loc { display: none; } }
 </style>
 </head>
 <body>
   <header class="bar">
+    <div class="loc"><svg class="globe" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6"/><ellipse cx="8" cy="8" rx="2.9" ry="6.6"/><path d="M1.4 8h13.2M2.5 4.6h11M2.5 11.4h11"/></svg><span>Seoul, Korea</span></div>
     <a class="home roll" href="/" aria-label="h2w2 home"><span>h2w2™</span><span aria-hidden="true">h2w2™</span></a>
     <nav>
       <a class="roll" href="/work.html"><span>Work</span><span aria-hidden="true">Work</span></a>
