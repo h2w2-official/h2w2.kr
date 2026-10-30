@@ -30,9 +30,11 @@
     .ko { font-size: 13px; line-height: 1.8; opacity: .55; word-break: keep-all; }
     .list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 80px; }
     .card { display: block; }
+    .go { display: block; }
+    .go .arrow { display: inline-block; transition: transform .3s; } .go:hover .arrow { transform: translateX(6px); }
     .thumb { position: relative; aspect-ratio: 4 / 3; background: var(--muted); display: grid; place-items: center; overflow: hidden; }
     .thumb .word { font-size: clamp(28px, 4vw, 52px); font-weight: 500; letter-spacing: -.02em; }
-    .thumb canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; }
+    .thumb canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: pointer; }
     .thumb .word { transition: opacity .6s; } .thumb.loaded .word { opacity: 0; }
     .thumb .tag { z-index: 1; }
     .thumb.soon .word { opacity: .35; }
@@ -69,12 +71,12 @@
     <h1>Selected projects</h1>
     <p class="ko">h2w2&#xAC00; &#xB9CC;&#xB4E0;, &#xADF8;&#xB9AC;&#xACE0; &#xB9CC;&#xB4E4;&#xACE0; &#xC788;&#xB294; &#xAC83;&#xB4E4;.</p>
     <ol class="list">
-      <li class="card">
+      <li class="card"><a class="go" href="/refloss.html" aria-label="re:floss project">
         <div class="thumb" id="refloss3d"><span class="tag">01</span><span class="word">re:floss</span></div>
-        <div class="meta"><h2>re:floss</h2><span class="yr">Reusable floss holder</span></div>
+        <div class="meta"><h2>re:floss <span class="arrow">&rarr;</span></h2><span class="yr">Reusable floss holder</span></div>
         <p class="desc">A reusable floss holder that rethinks the throwaway floss pick.<br>iF DESIGN AWARD Winner</p>
         <p class="ko">&#xC4F0;&#xACE0; &#xBC84;&#xB9AC;&#xB294; &#xCE58;&#xC2E4;&#xC758; &#xBC29;&#xC2DD;&#xC744; &#xB2E4;&#xC2DC; &#xC0DD;&#xAC01;&#xD55C;, &#xB2E4;&#xD68C;&#xC6A9; &#xCE58;&#xC2E4; &#xD640;&#xB354;.<br>iF DESIGN AWARD Winner</p>
-      </li>
+      </a></li>
       <li class="card">
         <div class="thumb soon"><span class="tag">02</span><span class="word">Coming soon</span></div>
         <div class="meta"><h2>Upcoming project</h2><span class="yr">To be revealed</span></div>
