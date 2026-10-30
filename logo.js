@@ -2,7 +2,8 @@
 (function () {
   var SRC = ['/media/logo/have.svg', '/media/logo/want.svg', '/media/logo/h2w2.svg'];
   var VB = { w: 394, h: 181 };                // frame the logos are centered in
-  var HOLD_FIRST = 0, MORPH = 7000, HOLD = 000;
+  var HOLD_FIRST = 0, MORPH = 7000;          // MORPH = time per step; have->want->h2w2 runs as one continuous motion
+  var HOVER = false;                          // cursor liquid after the sequence (off for now)
   var stage = document.getElementById('stage');
   var canvas = document.getElementById('fx');
   if (!stage || !canvas) return;
@@ -135,7 +136,7 @@
   }
 
   var mouse = { x: .5, y: .5 }, vel = { x: 0, y: 0 }, cur = { x: .5, y: .5, r: 0 }, targetR = 0, hovering = false, running = false;
-  var MAX_R = 0.42, ready = false, morph = 0, wob = 0, mo = 0;
+  var MAX_R = 0.42, ready = false, morph = 0, wob = 0, mo = 1;
   var seq = 0;           // 0 have, 1 want, 2 h2w2 (final, interactive)
   function fgColor(){ var c = getComputedStyle(stage).color.match(/\d+(\.\d+)?/g) || [17,17,17]; return [c[0]/255, c[1]/255, c[2]/255]; }
 
@@ -144,7 +145,7 @@
     W = Math.max(2, Math.round(rect.width * dpr)); H = Math.max(2, Math.round(rect.height * dpr));
     canvas.width = W; canvas.height = H; gl.viewport(0, 0, W, H); gl.uniform1f(U.aspect, W / H);
     return Promise.all(svgs.map(makeSet)).then(function(s){
-      sets = s; setA(sets[seq]); if (seq < 2) setB(sets[seq + 1]);
+      sets = s; setA(sets[seq]); setB(sets[Math.min(seq + 1, 2)]);
       ready = true; draw(performance.now()); stage.classList.add('gl');
     });
   }
@@ -159,20 +160,22 @@
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
-  // intro sequence: have -> want -> h2w2
+  // intro sequence: have -> want -> h2w2 as one continuous motion (no swap to the sharp
+  // texture in between or at the end, so nothing flashes); the last frame is kept.
   function ease(t){ return t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
-  function morphTo(next, done){
-    setB(sets[next]); var start = performance.now();
-    (function tick(now){
-      var p = Math.min(1, (now - start) / MORPH);
-      morph = ease(p); wob = Math.sin(Math.PI * p); mo = 1;
-      draw(now);
-      if (p < 1) requestAnimationFrame(tick);
-      else { seq = next; setA(sets[next]); morph = 0; wob = 0; mo = 0; draw(now); done(); }
-    })(start);
-  }
   function runSequence(){
-    setTimeout(function(){ morphTo(1, function(){ setTimeout(function(){ morphTo(2, function(){}); }, HOLD); }); }, HOLD_FIRST);
+    setTimeout(function(){
+      var start = performance.now(), total = MORPH * 2;
+      (function tick(now){
+        var t = Math.min(1, (now - start) / total), P = 2 * ease(t);
+        if (P >= 1 && seq === 0) { seq = 1; setA(sets[1]); setB(sets[2]); }
+        morph = seq === 0 ? P : Math.min(1, P - 1);
+        wob = Math.sin(Math.PI * t); mo = 1;
+        draw(now);
+        if (t < 1) requestAnimationFrame(tick);
+        else { seq = 2; wob = 0; draw(now); }
+      })(start);
+    }, HOLD_FIRST);
   }
   function whenIntroGone(cb){
     if (!document.body.classList.contains('intro-on')) return cb();
@@ -202,8 +205,8 @@
   }
   function start(){ if (!running) { running = true; requestAnimationFrame(frame); } }
   function pos(e){ var r = stage.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; }
-  function move(e){ if (seq < 2 || !ready) return; var p = pos(e); if (!hovering && cur.r < 0.01) { cur.x = p.x; cur.y = p.y; spring.vx = spring.vy = 0; t0 = performance.now(); } mouse = p; hovering = true; targetR = MAX_R; start(); }
-  function leave(){ if (seq < 2) return; hovering = false; targetR = 0; start(); }
+  function move(e){ if (!HOVER || seq < 2 || !ready) return; var p = pos(e); if (!hovering && cur.r < 0.01) { cur.x = p.x; cur.y = p.y; spring.vx = spring.vy = 0; t0 = performance.now(); } mouse = p; hovering = true; targetR = MAX_R; start(); }
+  function leave(){ if (!HOVER || seq < 2) return; hovering = false; targetR = 0; start(); }
   stage.addEventListener('pointermove', move);
   stage.addEventListener('pointerdown', move);
   stage.addEventListener('pointerleave', leave);
