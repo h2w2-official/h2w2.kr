@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About &#x2014; &#xD574;&#xBE0C;&#xD22C;&#xC6D0;&#xD22C;</title>
+  <meta name="description" content="h2w2™ (&#xD574;&#xBE0C;&#xD22C;&#xC6D0;&#xD22C;) &#x2014; About">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg?v=4">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #fafaf8; --fg: #111111; --muted: #EDEDED; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #111111; --fg: #f2f2ee; --muted: #1f1f1d; } }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--fg); font-family: "IBM Plex Mono", "IBM Plex Sans KR", ui-monospace, monospace; font-size: 13px; line-height: 1.4; letter-spacing: .02em; -webkit-font-smoothing: antialiased; min-height: 100svh; display: flex; flex-direction: column; }
+    a { color: inherit; text-decoration: none; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 28px; text-transform: uppercase; }
+    nav { display: flex; gap: 24px; text-transform: none; }
+    .roll { position: relative; display: inline-block; overflow: hidden; height: 1.4em; vertical-align: top; }
+    .roll > span { display: block; transition: transform .35s cubic-bezier(.65,0,.35,1); }
+    .roll > span + span { position: absolute; left: 0; top: 100%; }
+    .roll:hover > span, .roll:focus-visible > span { transform: translateY(-100%); }
+    .home { font-weight: 600; text-transform: none; }
+    .on { text-decoration: underline; text-underline-offset: 4px; }
+    main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 96px 28px 120px; }
+    .mono { font-size: 12px; text-transform: uppercase; opacity: .5; }
+    h1 { margin-top: 24px; font-size: clamp(30px, 4.4vw, 60px); font-weight: 500; letter-spacing: -.02em; line-height: 1.2; }
+    h1 + .ko { margin-top: 14px; }
+    .ko { font-size: 13px; line-height: 1.8; opacity: .55; word-break: keep-all; }
+    footer.bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; text-transform: uppercase; }
+    footer .r { justify-self: end; }
+    footer .label { font-style: normal; opacity: .5; margin-right: 10px; }
+    footer .copy { opacity: .7; }
+    .lc { text-transform: none; }
+    button.roll { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+    @media (max-width: 640px) {
+      body { font-size: 11px; } .bar { padding: 16px; } nav { gap: 16px; }
+      main { padding: 64px 16px 96px; }
+      footer.bar { grid-template-columns: 1fr 1fr; row-gap: 10px; } footer .copy { grid-column: 1 / -1; grid-row: 2; text-align: center; }
+    }
+    @media (prefers-reduced-motion: reduce) { .roll > span { transition: none; } }
+    .sec { margin-top: 96px; }
+    .sec h2 { display: flex; justify-content: space-between; font-size: 12px; font-weight: 400; text-transform: uppercase; opacity: .5; padding-bottom: 14px; }
+    .rows { list-style: none; border-top: 1px solid currentColor; }
+    .rows li { display: grid; grid-template-columns: 120px 1fr; gap: 24px; padding: 18px 0; border-bottom: 1px solid var(--muted); }
+    .rows .d { font-size: 12px; opacity: .5; padding-top: 2px; }
+    .rows .n { font-size: 15px; line-height: 1.6; word-break: keep-all; }
+    .rows .n .k { display: block; margin-top: 4px; font-size: 13px; line-height: 1.7; opacity: .55; }
+    .rows a.n:hover { text-decoration: underline; text-underline-offset: 4px; }
+    .rows .n .ext { opacity: .5; margin-left: 6px; }
+    .names { list-style: none; border-top: 1px solid currentColor; display: grid; grid-template-columns: repeat(3, 1fr); }
+    .names li { padding: 18px 0; border-bottom: 1px solid var(--muted); font-size: 15px; }
+    @media (max-width: 640px) { .sec { margin-top: 64px; } .rows li { grid-template-columns: 64px 1fr; gap: 14px; } .rows .n { font-size: 14px; } .names { grid-template-columns: 1fr 1fr; } .names li { font-size: 14px; } }
+</style>
+</head>
+<body>
+  <header class="bar">
+    <a class="home roll" href="/" aria-label="h2w2 home"><span>h2w2™</span><span aria-hidden="true">h2w2™</span></a>
+    <nav>
+      <a class="roll" href="/work.html"><span>Work</span><span aria-hidden="true">Work</span></a>
+      <a class="roll on" href="/about.html" aria-current="page"><span>About</span><span aria-hidden="true">About</span></a>
+    </nav>
+  </header>
+  <main>
+    <div class="mono">About &#x2014; <span class="lc">h2w2™</span></div>
+    <h1>Awards &amp; recognition</h1>
+    <p class="ko">수상, 소개, 산학협력.</p>
+    <section class="sec">
+      <h2><span>Awards</span><span>07</span></h2>
+      <ol class="rows">
+        <li><span class="d">2026.09</span><p class="n">Korea Design Exhibition &#x2014; Bronze Prize, Special Selection, Selection<span class="k">대한민국디자인전람회 동상 · 특선 · 입선</span></p></li>
+        <li><span class="d">2026.05</span><p class="n">iF Design Student Award 2026 &#x2014; Winner<span class="k">iF 디자인 스튜던트 어워드 2026 본상</span></p></li>
+        <li><span class="d">2026.05</span><p class="n">Good Design Korea &#x2014; Silver Prize, Minister of Trade and Industry Award<span class="k">굿디자인코리아 산업통상부장관상 (은상)</span></p></li>
+        <li><span class="d">2025.10</span><p class="n">Red Dot Award: Design Concept &#x2014; Best of the Best<span class="k">레드닷 디자인 어워드 디자인 콘셉트 최우수상</span></p></li>
+        <li><span class="d">2025.07</span><p class="n">Red Dot Award: Design Concept &#x2014; Winner<span class="k">레드닷 디자인 어워드 디자인 콘셉트 본상</span></p></li>
+        <li><span class="d">2024.07</span><p class="n">Red Dot Award: Design Concept &#x2014; Winner<span class="k">레드닷 디자인 어워드 디자인 콘셉트 본상</span></p></li>
+        <li><span class="d">2024.07</span><p class="n">Korea Design Exhibition &#x2014; Selection<span class="k">대한민국디자인전람회 입선</span></p></li>
+      </ol>
+    </section>
+    <section class="sec">
+      <h2><span>Featured in</span><span>03</span></h2>
+      <ol class="rows">
+        <li><span class="d">2025.12</span><a class="n" href="https://www.instagram.com/p/DSPdnVID1U0/" target="_blank" rel="noopener">artlamp &#x2014; LAYER Stool<span class="ext">&#x2197;</span><span class="k">@artlamp_org</span></a></li>
+        <li><span class="d">2025.11</span><a class="n" href="https://www.yankodesign.com/2025/11/27/this-furniture-trick-makes-flat-wood-look-curved-with-zero-waste/" target="_blank" rel="noopener">Yanko Design &#x2014; This Furniture Trick Makes Flat Wood Look Curved With Zero Waste<span class="ext">&#x2197;</span><span class="k">yankodesign.com</span></a></li>
+        <li><span class="d">2025.11</span><a class="n" href="https://www.yankodesign.com/2025/11/24/nova-cools-pcs-without-fans-or-spinning-blades-uses-ion-wind/" target="_blank" rel="noopener">Yanko Design &#x2014; NOVA Cools PCs Without Fans or Spinning Blades, Uses Ion Wind<span class="ext">&#x2197;</span><span class="k">yankodesign.com</span></a></li>
+      </ol>
+    </section>
+    <section class="sec">
+      <h2><span>Academia-Industry</span><span>05</span></h2>
+      <ul class="names">
+        <li>LG Electronics HE Lab</li>
+        <li>SLBS</li>
+        <li>NEXEN TIRE</li>
+        <li>NAVER</li>
+        <li>Shinhan Card</li>
+      </ul>
+    </section>
+  </main>
+  <footer class="bar">
+    <button class="roll" type="button" id="copyMail" data-mail="official@h2w2.kr" aria-label="Copy email address official@h2w2.kr"><span><i class="label">E.</i><span class="lc" data-t>official@h2w2.kr</span></span><span aria-hidden="true"><i class="label">E.</i><span class="lc" data-t>Click to copy</span></span></button>
+    <div class="copy">&copy;<span id="year">2026</span> <span class="lc">h2w2™</span>. All rights reserved.</div>
+    <a class="roll r" href="https://www.instagram.com/h2w2_official/" target="_blank" rel="noopener"><span><i class="label">Ins.</i>@H2W2_OFFICIAL</span><span aria-hidden="true"><i class="label">Ins.</i>@H2W2_OFFICIAL</span></a>
+  </footer>
+  <script>
+    (function () {
+      document.getElementById('year').textContent = new Date().getFullYear();
+      var btn = document.getElementById('copyMail'), mail = btn.getAttribute('data-mail'), timer;
+      function fallback(){ var t = document.createElement('textarea'); t.value = mail; t.setAttribute('readonly',''); t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); var ok = false; try { ok = document.execCommand('copy'); } catch(e){} document.body.removeChild(t); return ok; }
+      function done(ok){ var t = btn.querySelectorAll('[data-t]'); t[0].textContent = t[1].textContent = ok ? 'Copied!' : mail; clearTimeout(timer); timer = setTimeout(function(){ t[0].textContent = mail; t[1].textContent = 'Click to copy'; }, 1600); }
+      btn.addEventListener('click', function(){
+        if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(mail).then(function(){ done(true); }, function(){ done(fallback()); });
+        else done(fallback());
+      });
+    })();
+  </script>
+</body>
+</html>
