@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root { --bg: #fafaf8; --fg: #111111; --muted: #e9e9e4; }
+    :root { --bg: #fafaf8; --fg: #111111; --muted: #EDEDED; }
     @media (prefers-color-scheme: dark) { :root { --bg: #111111; --fg: #f2f2ee; --muted: #1f1f1d; } }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: var(--bg); color: var(--fg); font-family: "IBM Plex Mono", "IBM Plex Sans KR", ui-monospace, monospace; font-size: 13px; line-height: 1.4; letter-spacing: .02em; -webkit-font-smoothing: antialiased; min-height: 100svh; display: flex; flex-direction: column; }
@@ -34,7 +34,8 @@
     .go .arrow { display: inline-block; transition: transform .3s; } .go:hover .arrow { transform: translateX(6px); }
     .thumb { position: relative; aspect-ratio: 4 / 3; background: var(--muted); display: grid; place-items: center; overflow: hidden; }
     .thumb .word { font-size: clamp(28px, 4vw, 52px); font-weight: 500; letter-spacing: -.02em; }
-    .thumb canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: pointer; }
+    .thumb canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: pointer; transform: translateY(-1%);
+    .thumb .word { transition: opacity .6s; } .thumb.loaded .word { opacity: 0; } }
     .thumb .word { transition: opacity .6s; } .thumb.loaded .word { opacity: 0; }
     .thumb .tag { z-index: 1; }
     .thumb.soon .word { opacity: .35; }
@@ -111,12 +112,12 @@
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     box.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(26, 4 / 3, 1, 5000);
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9a94, 2.2));
-    const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(120, 220, 260); scene.add(key);
-    const rim = new THREE.DirectionalLight(0xffffff, 0.8); rim.position.set(-200, -60, -120); scene.add(rim);
+    const camera = new THREE.PerspectiveCamera(10.2, 4 / 3, 1, 5000);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9a9a, 2.0));
+    const key = new THREE.DirectionalLight(0xffffff, 2.8); key.position.set(120,20,50); scene.add(key);
+    const rim = new THREE.DirectionalLight(0xffffff, 1.5); rim.position.set(-200, -60, -10); scene.add(rim);
     const pivot = new THREE.Group(); scene.add(pivot);
-    const BASE = { x: 0.1, y: -0.25, z: 2.63 };
+    const BASE = { x: 0.2, y: -0.9, z: 2.4 };
     const target = { x: BASE.x, y: BASE.y }, cur = { x: BASE.x, y: BASE.y };
     let radius = 100, running = false;
     function resize(){ const w = box.clientWidth, h = box.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; const fit = radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)); camera.position.set(0, 0, fit * (camera.aspect < 1 ? 1.25 / camera.aspect : 1.05)); camera.lookAt(0, 0, 0); camera.updateProjectionMatrix(); draw(); }
@@ -127,7 +128,7 @@
     box.addEventListener('pointerleave', () => { target.x = BASE.x; target.y = BASE.y; go(); });
     new GLTFLoader().load('/media/re_floss.glb', gltf => {
       const obj = gltf.scene; obj.rotation.x = Math.PI / 2; obj.updateMatrixWorld(true);
-      const mat = new THREE.MeshStandardMaterial({ color: 0xd6d6d1, roughness: 0.55, metalness: 0 });
+      const mat = new THREE.MeshStandardMaterial({ color: 0xe6e6e6, roughness: 0.55, metalness: 0 });
       obj.traverse(o => { if (o.isMesh) o.material = mat; });
       const b = new THREE.Box3().setFromObject(obj); obj.position.sub(b.getCenter(new THREE.Vector3()));
       radius = b.getBoundingSphere(new THREE.Sphere()).radius;
