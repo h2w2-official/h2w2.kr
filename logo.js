@@ -43,21 +43,28 @@
     '}'
   ].join('\n');
 
-  function sh(type, src){ var o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o);
+  // all GL objects are (re)created here, so the logo can come back after a lost WebGL context
+  var prog, U, texs;
+  function initGL(){
+    gl.getExtension('OES_standard_derivatives');   // extensions must be re-enabled on a restored context
+    function sh(type, src){ var o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o);
     if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; }
-  var prog = gl.createProgram();
-  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
-  gl.linkProgram(prog); gl.useProgram(prog);
-  var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-  var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-  var U = {}; ['sA','oA','wA','dA','dB','mouse','vel','radius','aspect','time','color','morph','wob','mo'].forEach(function(k){ U[k] = gl.getUniformLocation(prog, k); });
-  gl.uniform1i(U.sA, 0); gl.uniform1i(U.oA, 1); gl.uniform1i(U.wA, 2); gl.uniform1i(U.dA, 3); gl.uniform1i(U.dB, 4);
-  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+    gl.linkProgram(prog); gl.useProgram(prog);
+    var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    U = {}; ['sA','oA','wA','dA','dB','mouse','vel','radius','aspect','time','color','morph','wob','mo'].forEach(function(k){ U[k] = gl.getUniformLocation(prog, k); });
+    gl.uniform1i(U.sA, 0); gl.uniform1i(U.oA, 1); gl.uniform1i(U.wA, 2); gl.uniform1i(U.dA, 3); gl.uniform1i(U.dB, 4);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-  var texs = [0,1,2,3,4,5].map(function(unit){ var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+    texs = [0,1,2,3,4,5].map(function(unit){ var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); return t; });
+  }
+  initGL();
+
   function upload(unit, img){ gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, texs[unit]); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img); }
   // distance fields of have / want / h2w2 live on texture units 3 / 4 / 5; a morph just points dA/dB at two of them
   function useA(i){ gl.uniform1i(U.dA, 3 + i); }
@@ -169,7 +176,7 @@
     return Promise.all(svgs.map(makeSet)).then(function(s){
       sets = s; upload(0, s[0].sharp); upload(1, s[0].soft); upload(2, s[0].wide);
       s.forEach(function(x, i){ upload(3 + i, x.sdf); }); useA(seg % 3); useB((seg + 1) % 3);
-      ready = true; draw(performance.now()); stage.classList.add('gl');
+      ready = true; draw(performance.now()); stage.classList.add('gl'); if (staticImg) staticImg.style.visibility = 'hidden';
     });
   }
 
@@ -196,7 +203,8 @@
         var e = now - start, k = Math.floor(e / MORPH), p = (e - k * MORPH) / MORPH;
         if (k !== last) { last = k; seg = k; useA(k % 3); useB((k + 1) % 3); }
         morph = ease(p); wob = Math.sin(Math.PI * morph); mo = 1;
-        draw(now);
+        if (gl.isContextLost()) { if (ready) fallback(); }
+        else if (onScreen) draw(now);
         requestAnimationFrame(tick);
       })(start);
     }, HOLD_FIRST);
@@ -236,7 +244,15 @@
   stage.addEventListener('pointerleave', leave);
   stage.addEventListener('pointercancel', leave);
   stage.addEventListener('pointerup', function(e){ if (e.pointerType !== 'mouse') leave(); });
-  var rt; window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ if (svgs) build(); }, 150); });
+  // WebGL can be dropped by the browser (GPU reset, memory pressure, long time in the background).
+  // Show the static SVG meanwhile and rebuild the animation when the context comes back.
+  function fallback(){ ready = false; stage.classList.remove('gl'); if (staticImg) staticImg.style.visibility = ''; }
+  canvas.addEventListener('webglcontextlost', function(e){ e.preventDefault(); fallback(); });
+  canvas.addEventListener('webglcontextrestored', function(){ initGL(); if (svgs) build().catch(fallback); });
+  // don't render while the logo is scrolled out of view
+  var onScreen = true;
+  if ('IntersectionObserver' in window) new IntersectionObserver(function(es){ onScreen = es[0].isIntersecting; }).observe(stage);
+  var rt; window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ if (svgs && !gl.isContextLost()) build().catch(fallback); }, 150); });
   if (window.matchMedia) { var mq = window.matchMedia('(prefers-color-scheme: dark)'); (mq.addEventListener ? mq.addEventListener('change', function(){ draw(performance.now()); }) : mq.addListener(function(){ draw(performance.now()); })); }
 
   Promise.all(SRC.map(function(u){ return fetch(u).then(function(r){ return r.text(); }); }))
