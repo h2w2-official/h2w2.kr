@@ -47,8 +47,13 @@
     .rows .d { font-size: 12px; opacity: .5; padding-top: 2px; }
     .rows .n { font-size: 15px; line-height: 1.6; word-break: keep-all; }
     .rows .n .k { display: block; margin-top: 4px; font-size: 13px; line-height: 1.7; opacity: .55; }
-    .rows a.n:hover { text-decoration: underline; text-underline-offset: 4px; }
-    .rows .n .ext { opacity: .5; margin-left: 6px; }
+    /* award count row: label | logos+counts aligned with the title column | total */
+    .sec h2.h-tally { display: grid; grid-template-columns: 120px 1fr auto; column-gap: 24px; align-items: center; opacity: 1; }
+    .h-tally > span:not(.tally) { opacity: .5; }
+    .tally { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; }
+    .tally > span { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+    .tally img { display: block; height: 15px; width: auto; }
+    @media (max-width: 640px) { .sec h2.h-tally { grid-template-columns: 64px 1fr auto; column-gap: 14px; } .tally { gap: 6px 14px; } .tally img { height: 13px; } }
     .names { list-style: none; border-top: 1px solid currentColor; display: grid; grid-template-columns: repeat(3, 1fr); }
     .names li { padding: 18px 0; border-bottom: 1px solid var(--muted); font-size: 15px; }
     @media (max-width: 640px) { .sec { margin-top: 64px; } .rows li { grid-template-columns: 64px 1fr; gap: 14px; } .rows .n { font-size: 14px; } .names { grid-template-columns: 1fr 1fr; } .names li { font-size: 14px; } }
@@ -73,7 +78,7 @@
     <h1>Awards &amp; recognition</h1>
     <p class="ko">h2w2™가 지나온.</p>
     <section class="sec">
-      <h2><span>Awards</span><span>06</span></h2>
+      <h2 class="h-tally"><span>Awards</span><span class="tally" role="img" aria-label="Red Dot 3, iF 1, Good Design Korea 1, Korea Design Exhibition 1"><span><img src="/media/awards/reddot.svg" alt="">3</span><span><img src="/media/awards/if.svg" alt="">1</span><span><img src="/media/awards/gooddesign.svg" alt="">1</span><span><img src="/media/awards/kde.svg" alt="">1</span></span><span>06</span></h2>
       <ol class="rows">
         <li><span class="d">2026.09</span><p class="n">Korea Design Exhibition &#x2014; Bronze Prize, Special Selection, Selection<span class="k">대한민국디자인전람회 동상 등 3건</span></p></li>
         <li><span class="d">2026.05</span><p class="n">iF Design Award 2026 &#x2014; Winner<span class="k">iF 디자인 어워드 2026 본상</span></p></li>
@@ -86,9 +91,9 @@
     <section class="sec">
       <h2><span>Featured in</span><span>03</span></h2>
       <ol class="rows">
-        <li><span class="d">2025.12</span><a class="n" href="https://www.instagram.com/p/DSPdnVID1U0/" target="_blank" rel="noopener">artlamp &#x2014; LAYER Stool<span class="ext">&#x2197;</span><span class="k">@artlamp_org</span></a></li>
-        <li><span class="d">2025.11</span><a class="n" href="https://www.yankodesign.com/2025/11/27/this-furniture-trick-makes-flat-wood-look-curved-with-zero-waste/" target="_blank" rel="noopener">Yanko Design &#x2014; This Furniture Trick Makes Flat Wood Look Curved With Zero Waste<span class="ext">&#x2197;</span><span class="k">yankodesign.com</span></a></li>
-        <li><span class="d">2025.11</span><a class="n" href="https://www.yankodesign.com/2025/11/24/nova-cools-pcs-without-fans-or-spinning-blades-uses-ion-wind/" target="_blank" rel="noopener">Yanko Design &#x2014; NOVA Cools PCs Without Fans or Spinning Blades, Uses Ion Wind<span class="ext">&#x2197;</span><span class="k">yankodesign.com</span></a></li>
+        <li><span class="d">2025.12</span><p class="n">artlamp &#x2014; LAYER Stool<span class="k">@artlamp_org</span></p></li>
+        <li><span class="d">2025.11</span><p class="n">Yanko Design &#x2014; This Furniture Trick Makes Flat Wood Look Curved With Zero Waste<span class="k">yankodesign.com</span></p></li>
+        <li><span class="d">2025.11</span><p class="n">Yanko Design &#x2014; NOVA Cools PCs Without Fans or Spinning Blades, Uses Ion Wind<span class="k">yankodesign.com</span></p></li>
       </ol>
     </section>
     <section class="sec">
