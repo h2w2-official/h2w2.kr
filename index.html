@@ -118,6 +118,23 @@
     body.intro-on { overflow: hidden; }
     @media (max-width: 640px) { .intro video { width: 64vw; } .intro p { font-size: 13px; } }
     .stage, .hint { z-index: 1; }
+    /* hero: word state above the logo (01 ---> 02 = 03), field + flickering tent at the bottom */
+    .hero { position: relative; z-index: 1; margin-top: -6svh; }
+    .hero-state { position: absolute; left: 11.29%; width: 77.41%; top: 2%; display: flex; justify-content: space-between; align-items: center; list-style: none; font-size: 11px; line-height: 1; }
+    .hero-state li { opacity: .3; transition: opacity .5s ease; position: relative; padding-bottom: 7px; }
+    .hero-state li:not(.op)::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: 0 50%; transition: transform .6s cubic-bezier(.65,0,.35,1); }
+    .hero-state li.on { opacity: .9; } .hero-state li.on::after { transform: scaleX(1); }
+    .hero-state .arrow span { display: inline-block; }
+    .hero-state .arrow.on span { animation: dart 1.1s cubic-bezier(.65,0,.35,1) infinite; }
+    @keyframes dart { 0% { transform: translateX(-6px); opacity: .2; } 60% { transform: translateX(6px); opacity: 1; } 100% { transform: translateX(10px); opacity: 0; } }
+    .hero-state .eq.on { font-weight: 700; }
+    .scene { position: absolute; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; }
+    .scene .field { display: block; width: 100%; height: auto; mix-blend-mode: multiply; }
+    .scene .tent { position: absolute; left: 46.61%; top: 77.31%; width: 23.23%; height: auto; animation: tentlight 7s steps(1, end) infinite; }
+    @keyframes tentlight { 0% { opacity: .15; } 30% { opacity: .9; } 32% { opacity: .35; } 34% { opacity: 1; } 70% { opacity: 1; } 72% { opacity: .4; } 74% { opacity: .9; } 76% { opacity: .15; } }
+    @media (prefers-color-scheme: dark) { .scene .field { filter: invert(1); mix-blend-mode: screen; opacity: .5; } }
+    @media (max-width: 640px) { .hero-state { font-size: 9px; top: -28px; left: 0; width: 100%; } }
+    @media (prefers-reduced-motion: reduce) { .scene .tent { animation: none; opacity: .9; } .hero-state .arrow.on span { animation: none; } }
     /* location label, top centre (ref: bpco.kr) */
     .loc { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 6px; text-transform: none; white-space: nowrap; pointer-events: none; }
     .loc .globe { width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 1.1; }
@@ -138,6 +155,9 @@
     </nav>
   </header>
   <main>
+  <div class="scene" aria-hidden="true"><img class="field" src="/media/hero/field.webp" alt="" width="1920" height="1080"><img class="tent" src="/media/hero/tent.webp" alt="" width="446" height="219"></div>
+  <div class="hero">
+    <ol class="hero-state" aria-hidden="true"><li class="on">(01) HAVE</li><li class="op arrow"><span>---&gt;</span></li><li>(02) WANT</li><li class="op eq">=</li><li>(03) <span class="lc">h2w2™</span></li></ol>
   <h1 class="stage" id="stage">
     <svg id="logo" role="img" aria-label="h2w2" viewBox="-30 -30 394 181" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <path d="M320.967 24.6523L320.967 33.3438H318.721L318.721 20.6484L321.504 20.6484L325.41 29.9258L329.316 20.6484L332.051 20.6484L332.051 33.3438H329.805L329.805 24.7256L325.996 33.3438H324.775L320.967 24.6523ZM310.42 22.6016L306.562 22.6016V20.6484L316.523 20.6484V22.6016L312.666 22.6016L312.666 33.3438H310.42L310.42 22.6016Z" fill="currentColor"/>
@@ -171,6 +191,7 @@
     <img class="logo-static" src="/media/logo/h2w2.svg" alt="">
     <canvas id="fx" aria-hidden="true"></canvas>
   </h1>
+  </div>
     <a class="hint roll" href="#about"><span>About ↓</span><span aria-hidden="true">About ↓</span></a>
   </main>
   <section class="about-pin" id="about" aria-label="About h2w2™">
@@ -257,6 +278,15 @@
       window.addEventListener('resize', onScroll);
       (small.addEventListener ? small.addEventListener('change', setMode) : small.addListener(setMode));
       setMode();
+    })();
+  </script>
+  <script>
+    // word state follows the logo: (01) have ---> (02) want = (03) h2w2
+    (function () {
+      var li = document.querySelectorAll('.hero-state li'), words = [li[0], li[2], li[4]], arrow = li[1], eq = li[3];
+      function set(w){ words.forEach(function(el, i){ el.classList.toggle('on', i === w); }); arrow.classList.toggle('on', w === 1); eq.classList.toggle('on', w === 2); }
+      document.addEventListener('h2w2:word', function(e){ set(e.detail); });
+      document.addEventListener('h2w2:static', function(){ set(2); });
     })();
   </script>
   <script src="/logo.js"></script>
