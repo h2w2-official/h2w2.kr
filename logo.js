@@ -9,9 +9,10 @@
   var stage = document.getElementById('stage');
   var canvas = document.getElementById('fx');
   if (!stage || !canvas) return;
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  function noAnim(){ document.dispatchEvent(new CustomEvent('h2w2:static')); }
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return noAnim();
   var gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });
-  if (!gl || !gl.getExtension('OES_standard_derivatives')) return; // static logo stays
+  if (!gl || !gl.getExtension('OES_standard_derivatives')) return noAnim(); // static logo stays
 
   var VS = 'attribute vec2 p; varying vec2 uv; void main(){ uv = p*0.5+0.5; uv.y = 1.0-uv.y; gl_Position = vec4(p,0.,1.); }';
   var FS = [
@@ -198,11 +199,13 @@
   }
   function runSequence(){
     setTimeout(function(){
-      var start = performance.now(), last = -1;
+      var start = performance.now(), last = -1, shownWord = -1;
       (function tick(now){
         var e = now - start, k = Math.floor(e / MORPH), p = (e - k * MORPH) / MORPH;
         if (k !== last) { last = k; seg = k; useA(k % 3); useB((k + 1) % 3); }
         morph = ease(p); wob = Math.sin(Math.PI * morph); mo = 1;
+        var w = morph < .5 ? k % 3 : (k + 1) % 3;
+        if (w !== shownWord) { shownWord = w; document.dispatchEvent(new CustomEvent('h2w2:word', { detail: w })); }
         if (gl.isContextLost()) { if (ready) fallback(); }
         else if (onScreen) draw(now);
         requestAnimationFrame(tick);
@@ -246,7 +249,7 @@
   stage.addEventListener('pointerup', function(e){ if (e.pointerType !== 'mouse') leave(); });
   // WebGL can be dropped by the browser (GPU reset, memory pressure, long time in the background).
   // Show the static SVG meanwhile and rebuild the animation when the context comes back.
-  function fallback(){ ready = false; stage.classList.remove('gl'); if (staticImg) staticImg.style.visibility = ''; }
+  function fallback(){ document.dispatchEvent(new CustomEvent('h2w2:static')); ready = false; stage.classList.remove('gl'); if (staticImg) staticImg.style.visibility = ''; }
   canvas.addEventListener('webglcontextlost', function(e){ e.preventDefault(); fallback(); });
   canvas.addEventListener('webglcontextrestored', function(){ initGL(); if (svgs) build().catch(fallback); });
   // don't render while the logo is scrolled out of view
