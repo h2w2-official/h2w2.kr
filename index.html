@@ -129,10 +129,10 @@
     @keyframes dart { 0% { transform: translateX(-6px); opacity: .2; } 60% { transform: translateX(6px); opacity: 1; } 100% { transform: translateX(10px); opacity: 0; } }
     .hero-state .eq.on { font-weight: 700; }
     .scene { position: absolute; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; }
-    .scene .field { display: block; width: 100%; height: auto; mix-blend-mode: multiply; }
+    .scene .field { display: block; width: 100%; height: auto; }
     .scene .tent { position: absolute; left: 46.61%; top: 77.31%; width: 23.23%; height: auto; animation: tentlight 7s steps(1, end) infinite; }
     @keyframes tentlight { 0% { opacity: .15; } 30% { opacity: .9; } 32% { opacity: .35; } 34% { opacity: 1; } 70% { opacity: 1; } 72% { opacity: .4; } 74% { opacity: .9; } 76% { opacity: .15; } }
-    @media (prefers-color-scheme: dark) { .scene .field { filter: invert(1); mix-blend-mode: screen; opacity: .5; } }
+    @media (prefers-color-scheme: dark) { .scene .field { filter: invert(1); opacity: .5; } }
     @media (max-width: 640px) { .hero-state { font-size: 9px; top: -28px; left: 0; width: 100%; } }
     @media (prefers-reduced-motion: reduce) { .scene .tent { animation: none; opacity: .9; } .hero-state .arrow.on span { animation: none; } }
     /* location label, top centre (ref: bpco.kr) */
