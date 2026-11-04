@@ -3,6 +3,7 @@
   var SRC = ['/media/logo/have.svg', '/media/logo/want.svg', '/media/logo/h2w2.svg'];
   var VB = { w: 394, h: 181 };                // frame the logos are centered in
   var HOLD_FIRST = 0, MORPH = 8000;          // MORPH = time per step; loop have->want->h2w2->have = 3 x MORPH
+  var TENT_ON = 0.06, TENT_OFF = 0.7;     // tent light timing, as a fraction of the have->want / h2w2->have steps
   var WANT = 0.3;                             // speed while passing each word (0 = stops there, 1 = barely slows)
   var RES = 2;                                // render resolution multiplier (higher = sharper, slower to load)
   var HOVER = false;                          // cursor liquid after the sequence (off for now)
@@ -199,13 +200,17 @@
   }
   function runSequence(){
     setTimeout(function(){
-      var start = performance.now(), last = -1, shownWord = -1;
+      var start = performance.now(), last = -1, shownWord = -1, shownLit = false;
       (function tick(now){
         var e = now - start, k = Math.floor(e / MORPH), p = (e - k * MORPH) / MORPH;
         if (k !== last) { last = k; seg = k; useA(k % 3); useB((k + 1) % 3); }
         morph = ease(p); wob = Math.sin(Math.PI * morph); mo = 1;
         var w = morph < .5 ? k % 3 : (k + 1) % 3;
         if (w !== shownWord) { shownWord = w; document.dispatchEvent(new CustomEvent('h2w2:word', { detail: w })); }
+        // tent light: switches on as have starts turning into want, fades out as the loop settles back on have
+        var step = k % 3, lit = shownLit;
+        if (step === 0 && p >= TENT_ON) lit = true; else if (step === 2 && p >= TENT_OFF) lit = false;
+        if (lit !== shownLit) { shownLit = lit; document.dispatchEvent(new CustomEvent('h2w2:tent', { detail: lit })); }
         if (gl.isContextLost()) { if (ready) fallback(); }
         else if (onScreen) draw(now);
         requestAnimationFrame(tick);
