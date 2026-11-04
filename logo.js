@@ -3,7 +3,7 @@
   var SRC = ['/media/logo/have.svg', '/media/logo/want.svg', '/media/logo/h2w2.svg'];
   var VB = { w: 394, h: 181 };                // frame the logos are centered in
   var HOLD_FIRST = 0, MORPH = 8000;          // MORPH = time per step; loop have->want->h2w2->have = 3 x MORPH
-  var TENT_ON = 0.06, TENT_OFF = 0.7;     // tent light timing, as a fraction of the have->want / h2w2->have steps
+  var TENT_ON = 0.06, TENT_OFF = 0.05;    // tent light timing, as a fraction of the have->want / h2w2->have steps (off as h2w2 starts turning back into have)
   var WANT = 0.3;                             // speed while passing each word (0 = stops there, 1 = barely slows)
   var RES = 2;                                // render resolution multiplier (higher = sharper, slower to load)
   var HOVER = false;                          // cursor liquid after the sequence (off for now)
