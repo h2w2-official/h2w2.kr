@@ -122,19 +122,22 @@
     .hero { position: relative; z-index: 1; margin-top: -6svh; }
     .hero-state { position: absolute; left: 11.29%; width: 77.41%; top: 2%; display: flex; justify-content: space-between; align-items: center; list-style: none; font-size: 11px; line-height: 1; }
     .hero-state li { opacity: .3; transition: opacity .5s ease; position: relative; padding-bottom: 7px; }
-    .hero-state li:not(.op)::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: 0 50%; transition: transform .6s cubic-bezier(.65,0,.35,1); }
-    .hero-state li.on { opacity: .9; } .hero-state li.on::after { transform: scaleX(1); }
+    /* underline grows in from the left and leaves to the right (same direction as have -> want -> h2w2) */
+    .hero-state li:not(.op)::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: 100% 50%; transition: transform .6s cubic-bezier(.65,0,.35,1); }
+    .hero-state li.on { opacity: .9; } .hero-state li.on::after { transform: scaleX(1); transform-origin: 0 50%; }
     /* arrow: characters turn bold one by one from the left (- , -- , --- , --->), no movement */
-    .hero-state .arrow .c { display: inline-block; transition: font-weight .15s; }
-    .hero-state .arrow .c.b, .hero-state .eq.on { font-weight: 700; }
+    .hero-state li.arrow { opacity: 1; }
+    .hero-state .arrow .c { display: inline-block; opacity: .3; transition: opacity .3s ease; }
+    .hero-state .arrow .c.b { opacity: .9; font-weight: 700; }
+    .hero-state .eq.on { font-weight: 700; }
     .scene { position: absolute; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; }
     .scene .field { display: block; width: 100%; height: auto; }
     .scene .tent { position: absolute; left: 46.5%; top: 77.15%; width: 23.23%; height: auto; animation: tentlight 7s infinite; }
     /* flickers on (stepped), fades off smoothly */
-    @keyframes tentlight { 0%, 30%, 32% { animation-timing-function: steps(1, end); } 0% { opacity: .15; } 30% { opacity: .9; } 32% { opacity: .35; } 34% { opacity: 1; animation-timing-function: linear; } 68% { opacity: 1; animation-timing-function: cubic-bezier(.45,0,.55,1); } 84%, 100% { opacity: .15; } }
+    @keyframes tentlight { 0% { opacity: .15; animation-timing-function: steps(1, end); } 30% { opacity: .9; animation-timing-function: steps(1, end); } 32% { opacity: .35; animation-timing-function: steps(1, end); } 34% { opacity: 1; animation-timing-function: steps(1, end); } 68% { opacity: 1; animation-timing-function: cubic-bezier(.45,0,.55,1); } 84% { opacity: .15; animation-timing-function: steps(1, end); } 100% { opacity: .15; } }
     @media (prefers-color-scheme: dark) { .scene .field { filter: invert(1); opacity: .5; } }
     @media (max-width: 640px) { .hero-state { font-size: 9px; top: -28px; left: 0; width: 100%; } }
-    @media (prefers-reduced-motion: reduce) { .scene .tent { animation: none; opacity: .9; } .hero-state .arrow .c { transition: none; } }
+    @media (prefers-reduced-motion: reduce) { .scene .tent { animation: none; opacity: .9; } .hero-state .arrow .c, .hero-state li::after { transition: none; } }
     /* location label, top centre (ref: bpco.kr) */
     .loc { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 6px; text-transform: none; white-space: nowrap; pointer-events: none; }
     .loc .globe { width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 1.1; }
@@ -284,7 +287,7 @@
     // word state follows the logo: (01) have ---> (02) want = (03) h2w2
     (function () {
       var li = document.querySelectorAll('.hero-state li'), words = [li[0], li[2], li[4]], arrow = li[1], eq = li[3];
-      var chars = arrow.querySelectorAll('.c'), timers = [], loop = null, STEP = 420;
+      var chars = arrow.querySelectorAll('.c'), timers = [], loop = null, STEP = 320, EQ = 700;
       var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       function clear(){ timers.forEach(clearTimeout); timers = []; clearInterval(loop); loop = null; }
       function later(ms, fn){ timers.push(setTimeout(fn, ms)); }
@@ -294,19 +297,19 @@
       function set(w){
         clear(); bolden(0);
         if (w === 0) { show([1,0,0,0,0]); return; }
-        if (w === 1) {                       // want: arrow fills - / -- / --- / ---> and repeats
-          show([0,1,1,0,0]);
-          if (still) { bolden(4); return; }
-          var n = 0; bolden(++n);
-          loop = setInterval(function(){ n = n % 4 + 1; bolden(n); }, STEP);
+        if (w === 1) {                       // have leaves right, arrow fills - / -- / --- / --->, then want
+          if (still) { show([0,0,1,0,0]); bolden(4); return; }
+          show([0,0,0,0,0]);
+          for (var i = 1; i <= 4; i++) (function(n){ later(STEP * n, function(){ bolden(n); }); })(i);
+          later(STEP * 5, function(){ show([0,0,1,0,0]); });
           return;
         }
-        // h2w2: want -> want + = -> = -> = + h2w2 -> h2w2
+        // h2w2: want -> want + = -> = -> = + h2w2 -> h2w2 (want's line slides out right into =)
         if (still) { show([0,0,0,0,1]); return; }
         show([0,0,1,1,0]);
-        later(STEP,     function(){ show([0,0,0,1,0]); });
-        later(STEP * 2, function(){ show([0,0,0,1,1]); });
-        later(STEP * 3, function(){ show([0,0,0,0,1]); });
+        later(EQ,     function(){ show([0,0,0,1,0]); });
+        later(EQ * 2, function(){ show([0,0,0,1,1]); });
+        later(EQ * 3, function(){ show([0,0,0,0,1]); });
       }
       document.addEventListener('h2w2:word', function(e){ set(e.detail); });
       document.addEventListener('h2w2:static', function(){ clear(); bolden(0); show([0,0,0,0,1]); });
