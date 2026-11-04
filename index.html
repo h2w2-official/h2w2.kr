@@ -132,12 +132,14 @@
     .hero-state .eq.on { font-weight: 700; }
     .scene { position: absolute; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; }
     .scene .field { display: block; width: 100%; height: auto; }
-    .scene .tent { position: absolute; left: 46.5%; top: 77.15%; width: 23.23%; height: auto; animation: tentlight 7s infinite; }
-    /* flickers on (stepped), fades off smoothly */
-    @keyframes tentlight { 0% { opacity: .15; animation-timing-function: steps(1, end); } 30% { opacity: .9; animation-timing-function: steps(1, end); } 32% { opacity: .35; animation-timing-function: steps(1, end); } 34% { opacity: 1; animation-timing-function: steps(1, end); } 68% { opacity: 1; animation-timing-function: cubic-bezier(.45,0,.55,1); } 84% { opacity: .15; animation-timing-function: steps(1, end); } 100% { opacity: .15; } }
+    .scene .tent { position: absolute; left: 46.5%; top: 77.15%; width: 23.23%; height: auto; opacity: .12; filter: drop-shadow(0 0 0 rgba(255, 214, 110, 0)); transition: opacity 1.8s cubic-bezier(.4,0,.2,1), filter 1.8s cubic-bezier(.4,0,.2,1); will-change: opacity; }
+    .scene .tent.lit { opacity: 1; filter: drop-shadow(0 0 14px rgba(255, 214, 110, .45)); animation: tenton 1.1s forwards; transition: filter .6s ease .5s; }
+    .scene .tent.lit.steady { animation: none; }   /* drop the finished flicker so switching off can fade from full brightness */
+    /* switching on: a lamp catching, stepped flicker then steady; switching off is the 1.8s opacity transition above */
+    @keyframes tenton { 0% { opacity: .12; animation-timing-function: steps(1, end); } 8% { opacity: .75; animation-timing-function: steps(1, end); } 14% { opacity: .2; animation-timing-function: steps(1, end); } 26% { opacity: .9; animation-timing-function: steps(1, end); } 32% { opacity: .4; animation-timing-function: steps(1, end); } 40% { opacity: .55; animation-timing-function: cubic-bezier(.2,0,.2,1); } 100% { opacity: 1; } }
     @media (prefers-color-scheme: dark) { .scene .field { filter: invert(1); opacity: .5; } }
     @media (max-width: 640px) { .hero-state { font-size: 9px; top: -28px; left: 0; width: 100%; } }
-    @media (prefers-reduced-motion: reduce) { .scene .tent { animation: none; opacity: .9; } .hero-state .arrow .c, .hero-state li::after { transition: none; } }
+    @media (prefers-reduced-motion: reduce) { .scene .tent, .scene .tent.lit { animation: none; transition: none; opacity: .9; } .hero-state .arrow .c, .hero-state li::after { transition: none; } }
     /* location label, top centre (ref: bpco.kr) */
     .loc { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 6px; text-transform: none; white-space: nowrap; pointer-events: none; }
     .loc .globe { width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 1.1; }
@@ -287,32 +289,38 @@
     // word state follows the logo: (01) have ---> (02) want = (03) h2w2
     (function () {
       var li = document.querySelectorAll('.hero-state li'), words = [li[0], li[2], li[4]], arrow = li[1], eq = li[3];
-      var chars = arrow.querySelectorAll('.c'), timers = [], loop = null, STEP = 320, EQ = 700;
+      var chars = arrow.querySelectorAll('.c'), timers = [], loop = null, STEP = 260, EQ = 650, EQ_HOLD = 1500;
+      var tent = document.querySelector('.scene .tent');
       var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       function clear(){ timers.forEach(clearTimeout); timers = []; clearInterval(loop); loop = null; }
       function later(ms, fn){ timers.push(setTimeout(fn, ms)); }
       // on: array of [have, arrow, want, eq, h2w2] highlight flags
       function show(on){ [li[0], arrow, li[2], eq, li[4]].forEach(function(el, i){ el.classList.toggle('on', !!on[i]); }); }
-      function bolden(n){ for (var i = 0; i < chars.length; i++) chars[i].classList.toggle('b', i < n); }
+      // bold the characters in [from, to): fill ->, then release from the left so the weight travels right
+      function bolden(to, from){ from = from || 0; for (var i = 0; i < chars.length; i++) chars[i].classList.toggle('b', i >= from && i < to); }
       function set(w){
         clear(); bolden(0);
         if (w === 0) { show([1,0,0,0,0]); return; }
         if (w === 1) {                       // have leaves right, arrow fills - / -- / --- / --->, then want
           if (still) { show([0,0,1,0,0]); bolden(4); return; }
           show([0,0,0,0,0]);
+          // -  /  --  /  ---  /  --->  then  ·-->  /  ··->  /  ···>  /  ····  (weight passes through to want)
           for (var i = 1; i <= 4; i++) (function(n){ later(STEP * n, function(){ bolden(n); }); })(i);
-          later(STEP * 5, function(){ show([0,0,1,0,0]); });
+          for (var j = 1; j <= 4; j++) (function(n){ later(STEP * (5 + n), function(){ bolden(4, n); }); })(j);
+          later(STEP * 9, function(){ show([0,0,1,0,0]); });      // want lands as the last > lets go
           return;
         }
         // h2w2: want -> want + = -> = -> = + h2w2 -> h2w2 (want's line slides out right into =)
         if (still) { show([0,0,0,0,1]); return; }
         show([0,0,1,1,0]);
-        later(EQ,     function(){ show([0,0,0,1,0]); });
-        later(EQ * 2, function(){ show([0,0,0,1,1]); });
-        later(EQ * 3, function(){ show([0,0,0,0,1]); });
+        later(EQ,                 function(){ show([0,0,0,1,0]); });   // want's line slides out right, = holds
+        later(EQ + EQ_HOLD,       function(){ show([0,0,0,1,1]); });
+        later(EQ * 2 + EQ_HOLD,   function(){ show([0,0,0,0,1]); });
       }
       document.addEventListener('h2w2:word', function(e){ set(e.detail); });
-      document.addEventListener('h2w2:static', function(){ clear(); bolden(0); show([0,0,0,0,1]); });
+      document.addEventListener('h2w2:static', function(){ clear(); bolden(0); show([0,0,0,0,1]); if (tent) tent.classList.add('lit'); });
+      document.addEventListener('h2w2:tent', function(e){ if (!tent) return; if (e.detail) tent.classList.add('lit'); else tent.classList.remove('lit', 'steady'); });
+      if (tent) tent.addEventListener('animationend', function(){ if (tent.classList.contains('lit')) tent.classList.add('steady'); });
     })();
   </script>
   <script src="/logo.js"></script>
