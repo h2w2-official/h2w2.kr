@@ -15,16 +15,16 @@
   var ROUND = 1.6;                 // corner roundness (px)
   var MAX_DEFORM = 7;            // how far a corner may lag behind while moving (px) — the liquid skew
   var HOVER_SCALE = 1.25;          // arrow size over links / buttons
-  var CORNER_K = [1, 0.1, 0.2, 0.1], CORNER_D = 0.8;  // corner springs: tip fast, the rest lazy (lower k = stretchier)
+  var CORNER_K = [1, 0.2, 0.3, 0.2], CORNER_D = 0.8;  // corner springs: tip fast, the rest lazy (lower k = stretchier)
   var TAIL_K = 0.07, TAIL_D = 0.70;   // tail springs (lower k = longer, stickier tail)
-  var TAIL_R = [2, 2, 6];    // tail ball radii, front to back
+  var TAIL_R = [4, 4, 8];    // tail ball radii, front to back
   var SEG_MAX = 22;                // longest gap between tail balls (px) — fast moves stretch up to 3x this
   // ink volume: a tail stretched past SNAP of its longest length snaps, leaving a big drop behind.
   // The cursor then holds less ink (shorter, thinner tail) until it rests and refills.
   var SNAP = 0.85;                 // fraction of the longest stretch where the tail snaps
   var SNAP_COST = 0.4;             // ink lost per snap (full = 1)
   var MIN_INK = 0.25;              // below this the tail no longer snaps
-  var REFILL = 0.6, REFILL_AFTER = 250;  // refill per second, and how long (ms) the pointer must rest first
+  var REFILL = 0.8, REFILL_AFTER = 200;  // refill per second, and how long (ms) the pointer must rest first
   var WOBBLE = 1.5, WOBBLE_SPEED = 1;  // rest breathing: size (px) and speed
   var SPLASH_SPEED = 38;           // pointer speed (px/frame) that starts shedding droplets
   var MAX_DROPS = 16;
