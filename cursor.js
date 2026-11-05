@@ -18,7 +18,13 @@
   var CORNER_K = [1, 0.1, 0.2, 0.1], CORNER_D = 0.8;  // corner springs: tip fast, the rest lazy (lower k = stretchier)
   var TAIL_K = 0.07, TAIL_D = 0.70;   // tail springs (lower k = longer, stickier tail)
   var TAIL_R = [2, 2, 6];    // tail ball radii, front to back
-  var SEG_MAX = 11;                // longest gap between tail balls (px)
+  var SEG_MAX = 22;                // longest gap between tail balls (px) — fast moves stretch up to 3x this
+  // ink volume: a tail stretched past SNAP of its longest length snaps, leaving a big drop behind.
+  // The cursor then holds less ink (shorter, thinner tail) until it rests and refills.
+  var SNAP = 0.85;                 // fraction of the longest stretch where the tail snaps
+  var SNAP_COST = 0.4;             // ink lost per snap (full = 1)
+  var MIN_INK = 0.25;              // below this the tail no longer snaps
+  var REFILL = 0.6, REFILL_AFTER = 250;  // refill per second, and how long (ms) the pointer must rest first
   var WOBBLE = 1.5, WOBBLE_SPEED = 1;  // rest breathing: size (px) and speed
   var SPLASH_SPEED = 38;           // pointer speed (px/frame) that starts shedding droplets
   var MAX_DROPS = 16;
@@ -47,6 +53,7 @@
   var tail = TAIL_R.map(function (r) { return { x: -999, y: -999, vx: 0, vy: 0, r: r }; });
   var drops = [];
   var scale = 1, scaleTarget = 1, shown = false, down = false, last = performance.now(), nextDrop = 0, speed = 0;
+  var ink = 1, restMs = 0, lastSnap = 0;
 
   function anchor() {   // where the tail grows from: the middle of the arrow body
     return { x: (corners[0].x + corners[1].x + corners[2].x + corners[3].x) / 4, y: (corners[0].y + corners[1].y + corners[2].y + corners[3].y) / 4 };
@@ -160,12 +167,24 @@
       var lx = cr.x - gx, ly = cr.y - gy, ll = Math.hypot(lx, ly);
       if (ll > MAX_DEFORM) { cr.x = gx + lx / ll * MAX_DEFORM; cr.y = gy + ly / ll * MAX_DEFORM; }
     }
+    // ink refills only while the pointer rests
+    if (speed < 1) { restMs += dt * 16.667; if (restMs > REFILL_AFTER) ink = Math.min(1, ink + REFILL * dt / 60); } else restMs = 0;
+    var segMax = SEG_MAX * (0.3 + 0.7 * ink), len = 0;   // less ink = shorter reach
     var a = anchor(), prev = { x: a.x, y: a.y };
     for (var j = 0; j < tail.length; j++) {
       var tl = tail[j]; spring(tl, prev.x, prev.y, TAIL_K, TAIL_D, dt);
       var sx = tl.x - prev.x, sy = tl.y - prev.y, sl = Math.hypot(sx, sy);
-      if (sl > SEG_MAX) { tl.x = prev.x + sx / sl * SEG_MAX; tl.y = prev.y + sy / sl * SEG_MAX; }
-      prev = tl;
+      if (sl > segMax) { tl.x = prev.x + sx / sl * segMax; tl.y = prev.y + sy / sl * segMax; sl = segMax; }
+      len += sl; prev = tl;
+    }
+    // stretched too far: the tail end tears off as a big drop and the tail springs back
+    if (!still && shown && ink > MIN_INK && len > SNAP * segMax * tail.length && now - lastSnap > 350) {
+      lastSnap = now;
+      var te = tail[tail.length - 1], tm = tail[tail.length - 2];
+      drops.push({ x: te.x, y: te.y, vx: te.vx * 0.2, vy: te.vy * 0.2, r0: Math.max(4, te.r * 1.15 * (0.7 + 0.3 * ink)), born: now, life: 1700 + Math.random() * 900, hold: 0.65 });
+      te.x = tm.x; te.y = tm.y; te.vx *= 0.2; te.vy *= 0.2;            // recoil toward the arrow
+      tm.x = (tm.x + tail[0].x) / 2; tm.y = (tm.y + tail[0].y) / 2; tm.vx *= 0.3; tm.vy *= 0.3;
+      ink = Math.max(0, ink - SNAP_COST);
     }
 
     if (!still && shown && speed > SPLASH_SPEED && now > nextDrop && drops.length < MAX_DROPS) {
@@ -174,7 +193,8 @@
       var sv = Math.hypot(src.vx, src.vy) || 1, nx = -src.vy / sv, ny = src.vx / sv, side = (Math.random() - .5) * 2;
       drops.push({ x: src.x + nx * side * 5, y: src.y + ny * side * 5,
         vx: src.vx * (0.15 + Math.random() * 0.2) + nx * side * 0.6, vy: src.vy * (0.15 + Math.random() * 0.2) + ny * side * 0.6,
-        r0: 2 + Math.random() * 3, born: now, life: 900 + Math.random() * 900 });
+        r0: (2 + Math.random() * 3) * (0.5 + 0.5 * ink), born: now, life: 900 + Math.random() * 900 });
+      ink = Math.max(0, ink - 0.02);                                   // every splash spends a little ink
     }
 
     poly = []; balls = []; box = null;
@@ -185,7 +205,7 @@
       // tail: continuous neck from the arrow body; it sinks back inside the arrow when it slows down
       var stretch = Math.min(Math.hypot(tail[2].x - a.x, tail[2].y - a.y) / 24, 1);
       if (stretch > 0.04) {
-        var chain = [{ x: a.x, y: a.y, r: 3 }].concat(tail.map(function (t) { return { x: t.x, y: t.y, r: t.r * (0.35 + 0.65 * stretch) }; }));
+        var chain = [{ x: a.x, y: a.y, r: 3 }].concat(tail.map(function (t) { return { x: t.x, y: t.y, r: t.r * (0.35 + 0.65 * stretch) * (0.45 + 0.55 * ink) }; }));
         for (var k = 1; k < chain.length; k++) {
           var A = chain[k - 1], B = chain[k], L = Math.hypot(B.x - A.x, B.y - A.y), steps = Math.max(1, Math.ceil(L / 2.2));
           for (var u = 1; u <= steps; u++) { var f = u / steps; balls.push({ x: A.x + (B.x - A.x) * f, y: A.y + (B.y - A.y) * f, r: (A.r + (B.r - A.r) * f) * 0.6 }); }
@@ -197,7 +217,7 @@
       var dr = drops[q], age = (now - dr.born) / dr.life;
       dr.vx *= Math.pow(0.86, dt); dr.vy *= Math.pow(0.86, dt);
       dr.x += dr.vx * dt; dr.y += dr.vy * dt;
-      var fade = age < 0.55 ? 1 : 1 - (age - 0.55) / 0.45;      // lingers, then dries up
+      var hold = dr.hold || 0.55, fade = age < hold ? 1 : 1 - (age - hold) / (1 - hold);   // lingers, then dries up
       balls.push({ x: dr.x, y: dr.y, r: dr.r0 * Math.sqrt(Math.max(fade, 0)) });
     }
     if (poly.length || balls.length) { g.fillStyle = ink; draw(); }
