@@ -13,13 +13,13 @@
   // arrow corners relative to the tip (px): tip, bottom of the left edge, inner notch, right wing
   var SHAPE = [[0, 0], [0, 21], [6.6, 15], [15, 14.6]];
   var ROUND = 1.6;                 // corner roundness (px)
-  var MAX_DEFORM = 4.5;            // how far a corner may lag behind while moving (px) — the liquid skew
+  var MAX_DEFORM = 7;            // how far a corner may lag behind while moving (px) — the liquid skew
   var HOVER_SCALE = 1.25;          // arrow size over links / buttons
-  var CORNER_K = [1, 0.16, 0.2, 0.18], CORNER_D = 0.74;  // corner springs: tip fast, the rest lazy (lower k = stretchier)
+  var CORNER_K = [1, 0.1, 0.2, 0.1], CORNER_D = 0.8;  // corner springs: tip fast, the rest lazy (lower k = stretchier)
   var TAIL_K = 0.07, TAIL_D = 0.70;   // tail springs (lower k = longer, stickier tail)
-  var TAIL_R = [3.4, 2.8, 2.2];    // tail ball radii, front to back
+  var TAIL_R = [2, 2, 6];    // tail ball radii, front to back
   var SEG_MAX = 11;                // longest gap between tail balls (px)
-  var WOBBLE = 0.9, WOBBLE_SPEED = 0.3;  // rest breathing: size (px) and speed
+  var WOBBLE = 1.5, WOBBLE_SPEED = 1;  // rest breathing: size (px) and speed
   var SPLASH_SPEED = 38;           // pointer speed (px/frame) that starts shedding droplets
   var MAX_DROPS = 16;
   var REACH = 3.2;                 // how far ink pulls toward ink before it merges (px)
