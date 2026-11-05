@@ -79,6 +79,12 @@
   addEventListener('blur', function () { shown = false; });
   addEventListener('pointerdown', function () { down = true; });
   addEventListener('pointerup', function () { down = false; });
+  // left-behind drops belong to the page, not the screen: when the page scrolls they scroll with it
+  var sX = scrollX, sY = scrollY;
+  addEventListener('scroll', function () {
+    var dx = scrollX - sX, dy = scrollY - sY; sX = scrollX; sY = scrollY;
+    for (var i = 0; i < drops.length; i++) { drops[i].x -= dx; drops[i].y -= dy; }
+  }, { passive: true });
 
   function spring(p, tx, ty, k, d, dt) {
     p.vx = (p.vx + (tx - p.x) * k * dt) * Math.pow(d, dt);
