@@ -1,100 +1,78 @@
-// h2w2 hero logo: have -> want -> h2w2 liquid morph, then cursor-driven liquid hover.
+// h2w2 hero logo: endless liquid morph  have -> want -> h2w2 -> have ...
+// Each word is turned into a float signed-distance field at three softness levels (sharp / soft / blob).
+// A step melts the current word into a rounded blob, swaps the shape while it is liquid, and lets the
+// next word set again — like ink re-forming — instead of cross-fading two hard outlines (which tears).
 (function () {
   var SRC = ['/media/logo/have.svg', '/media/logo/want.svg', '/media/logo/h2w2.svg'];
   var VB = { w: 394, h: 181 };                // frame the logos are centered in
   var HOLD_FIRST = 0, MORPH = 8000;          // MORPH = time per step; loop have->want->h2w2->have = 3 x MORPH
-  var TENT_ON = 0.06, TENT_OFF = 0.05;    // tent light timing, as a fraction of the have->want / h2w2->have steps (off as h2w2 starts turning back into have)
+  var TENT_ON = 0.06, TENT_OFF = 0.05;       // tent light timing, as a fraction of the have->want / h2w2->have steps
   var WANT = 0.3;                             // speed while passing each word (0 = stops there, 1 = barely slows)
-  var RES = 2;                                // render resolution multiplier (higher = sharper, slower to load)
-  var HOVER = false;                          // cursor liquid after the sequence (off for now)
+  // liquid feel (fractions of the logo height)
+  var MELT = 0.5;                             // how far a word melts mid-step (0 = hard outline, 1 = full blob)
+  var SOFT_R = 0.03, BLOB_R = 0.065;          // blur radius of the "soft" and "blob" levels
+  var SWELL = 0.01;                           // extra thickness while liquid, keeps thin parts from snapping off
+  var RIPPLE = 0.012;                         // slow surface flow while liquid
+  var SDF_SCALE = 1.5;                        // distance-field resolution per CSS px (canvas itself renders at full res)
+  var RES = 2;                                // canvas resolution multiplier (x devicePixelRatio, capped)
+
   var stage = document.getElementById('stage');
   var canvas = document.getElementById('fx');
   if (!stage || !canvas) return;
   function noAnim(){ document.dispatchEvent(new CustomEvent('h2w2:static')); }
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return noAnim();
-  var gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });
-  if (!gl || !gl.getExtension('OES_standard_derivatives')) return noAnim(); // static logo stays
+  var gl = canvas.getContext('webgl2', { premultipliedAlpha: true, alpha: true, antialias: false });
+  if (!gl) return noAnim(); // static logo stays
 
-  var VS = 'attribute vec2 p; varying vec2 uv; void main(){ uv = p*0.5+0.5; uv.y = 1.0-uv.y; gl_Position = vec4(p,0.,1.); }';
+  var VS = '#version 300 es\nin vec2 p; out vec2 uv; void main(){ uv = p*0.5+0.5; uv.y = 1.0-uv.y; gl_Position = vec4(p,0.,1.); }';
   var FS = [
-    '#extension GL_OES_standard_derivatives : enable',
+    '#version 300 es',
     'precision highp float;',
-    'varying vec2 uv;',
-    'uniform sampler2D sA; uniform sampler2D oA; uniform sampler2D wA; uniform sampler2D dA; uniform sampler2D dB;',
-    'uniform vec2 mouse; uniform vec2 vel; uniform float radius; uniform float aspect; uniform float time; uniform vec3 color;',
-    'uniform float morph; uniform float wob; uniform float mo;',
-    'vec2 flow(vec2 q, float t){ return vec2(sin(q.y*1.7 + t*0.9) + sin(q.x*1.1 - t*0.6 + 1.3), sin(q.x*1.5 - t*0.8) + sin(q.y*1.2 + t*0.7 + 2.1)) * 0.25; }',
+    'in vec2 uv; out vec4 o;',
+    'uniform sampler2D dA; uniform sampler2D dB;',
+    'uniform float cross;   // 0 = word A, 1 = word B',
+    'uniform float melt;    // 0 = sharp, 1 = blob',
+    'uniform float swell; uniform float ripple; uniform float time; uniform float aspect; uniform vec3 color;',
+    // r = sharp, g = soft, b = blob distance (in logo heights, negative inside)
+    'float level(vec3 t, float m){ return m < 0.5 ? mix(t.r, t.g, m * 2.0) : mix(t.g, t.b, m * 2.0 - 1.0); }',
     'void main(){',
-    '  vec2 d = (uv - mouse) * vec2(aspect, 1.0);',
-    '  float s = 1.0 - smoothstep(0.0, radius, length(d));',
-    '  s = s*s*(3.0-2.0*s);',
-    '  vec2 lens = (uv - mouse) * s * 0.45;',
-    '  vec2 drag = vel * s * 1.0;',
-    '  vec2 q = uv*vec2(aspect,1.0)*3.2;',
-    '  vec2 swirl = flow(q, time);',
-    '  vec2 suv = uv - lens - drag + swirl * (0.06 * s + 0.045 * wob);',
-    '  float sharp = texture2D(sA, suv).a;',
-    '  float soft = texture2D(oA, suv).a, wide = texture2D(wA, suv).a;',
-    '  float hover = mix(sharp, max(soft * 1.75, wide * 1.5), s * 0.7);',
-    '  float goo = mix(texture2D(dA, suv).a, texture2D(dB, suv).a, morph);',
-    '  float field = mix(hover, goo, mo);',
-    '  float w = fwidth(field) * 0.9 + 1e-4;',
-    '  float liquid = smoothstep(0.5 - w, 0.5 + w, field);',
-    '  float a = mix(sharp, liquid, max(smoothstep(0.0, 0.12, s), mo));',
-    '  gl_FragColor = vec4(color * a, a);',
+    '  vec2 q = uv * vec2(aspect, 1.0);',
+    '  vec2 flow = vec2(sin(q.y * 6.0 + time * 0.7) + sin(q.x * 3.1 - time * 0.45 + 1.3),',
+    '                   sin(q.x * 4.3 - time * 0.6) + sin(q.y * 3.7 + time * 0.5 + 2.1)) * 0.5;',
+    '  vec2 suv = uv + flow * ripple * vec2(1.0 / aspect, 1.0);',
+    '  float d = mix(level(texture(dA, suv).rgb, melt), level(texture(dB, suv).rgb, melt), cross) - swell;',
+    '  float w = fwidth(d) * 0.75 + 1e-5;',
+    '  float a = 1.0 - smoothstep(-w, w, d);',
+    '  o = vec4(color * a, a);',
     '}'
   ].join('\n');
 
   // all GL objects are (re)created here, so the logo can come back after a lost WebGL context
-  var prog, U, texs;
+  var prog, U, texs = [];
   function initGL(){
-    gl.getExtension('OES_standard_derivatives');   // extensions must be re-enabled on a restored context
-    function sh(type, src){ var o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o);
-    if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; }
+    function sh(type, src){ var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
     prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
     gl.linkProgram(prog); gl.useProgram(prog);
     var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
     var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    U = {}; ['sA','oA','wA','dA','dB','mouse','vel','radius','aspect','time','color','morph','wob','mo'].forEach(function(k){ U[k] = gl.getUniformLocation(prog, k); });
-    gl.uniform1i(U.sA, 0); gl.uniform1i(U.oA, 1); gl.uniform1i(U.wA, 2); gl.uniform1i(U.dA, 3); gl.uniform1i(U.dB, 4);
+    U = {}; ['dA','dB','cross','melt','swell','ripple','time','aspect','color'].forEach(function(k){ U[k] = gl.getUniformLocation(prog, k); });
+    gl.uniform1i(U.dA, 0); gl.uniform1i(U.dB, 1);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
-    texs = [0,1,2,3,4,5].map(function(unit){ var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); return t; });
+    texs = [0,1,2].map(function(){ var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); return t; });
   }
   initGL();
 
-  function upload(unit, img){ gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, texs[unit]); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img); }
-  // distance fields of have / want / h2w2 live on texture units 3 / 4 / 5; a morph just points dA/dB at two of them
-  function useA(i){ gl.uniform1i(U.dA, 3 + i); }
-  function useB(i){ gl.uniform1i(U.dB, 3 + i); }
+  function upload(i, f){ gl.bindTexture(gl.TEXTURE_2D, texs[i]); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, f.w, f.h, 0, gl.RGBA, gl.FLOAT, f.data); }
+  // morph step from word a to word b: bind their fields to units 0 / 1
+  function pair(a, b){ gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texs[a]); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texs[b]); }
 
-  // alpha-channel gaussian blur (3 box passes)
-  function blurAlpha(src, W, H, r){
-    var a = new Float32Array(W*H), b = new Float32Array(W*H), i;
-    for (i = 0; i < W*H; i++) a[i] = src[i*4+3] / 255;
-    function pass(inA, out, horiz){
-      var len = horiz ? W : H, lines = horiz ? H : W, inv = 1/(2*r+1);
-      for (var l = 0; l < lines; l++){
-        var sum = 0, k;
-        for (k = -r; k <= r; k++){ var kk = Math.min(len-1, Math.max(0,k)); sum += inA[horiz ? l*W+kk : kk*W+l]; }
-        for (k = 0; k < len; k++){
-          out[horiz ? l*W+k : k*W+l] = sum*inv;
-          var add = Math.min(len-1, k+r+1), sub = Math.max(0, k-r);
-          sum += inA[horiz ? l*W+add : add*W+l] - inA[horiz ? l*W+sub : sub*W+l];
-        }
-      }
-    }
-    for (var it = 0; it < 3; it++){ pass(a, b, true); pass(b, a, false); }
-    var out = new ImageData(W, H);
-    for (i = 0; i < W*H; i++){ out.data[i*4]=255; out.data[i*4+1]=255; out.data[i*4+2]=255; out.data[i*4+3]=Math.round(a[i]*255); }
-    return out;
-  }
-
-  // signed distance field (Felzenszwalb EDT) packed into alpha: >0.5 inside
+  // ---------- distance fields (run in a worker) ----------
+  // exact euclidean distance transform (Felzenszwalb)
   function edt1(f, n, d, v, z){
     var k = 0; v[0] = 0; z[0] = -1e20; z[1] = 1e20;
     for (var q = 1; q < n; q++){
@@ -110,26 +88,59 @@
     for (x = 0; x < W; x++){ for (y = 0; y < H; y++) f[y] = grid[y*W + x]; edt1(f, H, d, v, z); for (y = 0; y < H; y++) grid[y*W + x] = d[y]; }
     for (y = 0; y < H; y++){ for (x = 0; x < W; x++) f[x] = grid[y*W + x]; edt1(f, W, d, v, z); for (x = 0; x < W; x++) grid[y*W + x] = d[x]; }
   }
-  function sdfImage(src, W, H, spread){
-    var inG = new Float64Array(W*H), outG = new Float64Array(W*H), i;
-    for (i = 0; i < W*H; i++){ var on = src[i*4+3] > 127; outG[i] = on ? 0 : 1e20; inG[i] = on ? 1e20 : 0; }
-    edt(outG, W, H); edt(inG, W, H);
-    var D = new Float32Array(W*H), T = new Float32Array(W*H);
-    for (i = 0; i < W*H; i++) D[i] = Math.sqrt(outG[i]) - Math.sqrt(inG[i]) - 0.5;
-    for (var it = 0; it < 2; it++){ // smooth pixel stair-steps
-      for (var y = 0; y < H; y++) for (var x = 0; x < W; x++){ var s0 = 0, c = 0; for (var k = -1; k <= 1; k++){ var xx = x + k; if (xx >= 0 && xx < W){ s0 += D[y*W+xx]; c++; } } T[y*W+x] = s0 / c; }
-      for (y = 0; y < H; y++) for (x = 0; x < W; x++){ var s1 = 0, c1 = 0; for (k = -1; k <= 1; k++){ var yy = y + k; if (yy >= 0 && yy < H){ s1 += T[yy*W+x]; c1++; } } D[y*W+x] = s1 / c1; }
+  // separable box blur, 3 passes ~ gaussian
+  function blur(src, W, H, r){
+    var a = Float32Array.from(src), b = new Float32Array(W*H);
+    if (r < 1) return a;
+    function pass(inA, out, horiz){
+      var len = horiz ? W : H, lines = horiz ? H : W, inv = 1/(2*r+1);
+      for (var l = 0; l < lines; l++){
+        var sum = 0, k;
+        for (k = -r; k <= r; k++){ var kk = Math.min(len-1, Math.max(0,k)); sum += inA[horiz ? l*W+kk : kk*W+l]; }
+        for (k = 0; k < len; k++){
+          out[horiz ? l*W+k : k*W+l] = sum*inv;
+          var add = Math.min(len-1, k+r+1), sub = Math.max(0, k-r);
+          sum += inA[horiz ? l*W+add : add*W+l] - inA[horiz ? l*W+sub : sub*W+l];
+        }
+      }
     }
-    var out = new ImageData(W, H);
-    for (i = 0; i < W*H; i++){ var dd = D[i]; var val = 0.5 - dd / (2*spread);
-      out.data[i*4]=255; out.data[i*4+1]=255; out.data[i*4+2]=255; out.data[i*4+3]=Math.round(Math.max(0, Math.min(1, val))*255); }
-    return out;
+    for (var it = 0; it < 3; it++){ pass(a, b, true); pass(b, a, false); }
+    return a;
+  }
+  // px: RGBA rasterized at 2x the field size. Returns RGBA float field (sharp, soft, blob, 0) in logo heights.
+  function field(px, W2, H2, softR, blobR){
+    var N = W2*H2, inG = new Float64Array(N), outG = new Float64Array(N), i;
+    for (i = 0; i < N; i++){ var on = px[i*4+3] > 127; outG[i] = on ? 0 : 1e20; inG[i] = on ? 1e20 : 0; }
+    edt(outG, W2, H2); edt(inG, W2, H2);
+    var W = W2 >> 1, H = H2 >> 1, D = new Float32Array(W*H), x, y;
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++){ // 2x2 average, back to field pixels
+      var s = 0;
+      for (var dy = 0; dy < 2; dy++) for (var dx = 0; dx < 2; dx++){ var j = (y*2+dy)*W2 + x*2+dx; s += Math.sqrt(outG[j]) - Math.sqrt(inG[j]) - 0.5 * (outG[j] > 0 ? 1 : -1); }
+      D[y*W+x] = s / 8 / H;    // /4 average, /2 back to field px, /H -> logo heights
+    }
+    var S = blur(D, W, H, Math.round(softR * H)), B = blur(D, W, H, Math.round(blobR * H));
+    var out = new Float32Array(W*H*4);
+    for (i = 0; i < W*H; i++){ out[i*4] = D[i]; out[i*4+1] = S[i]; out[i*4+2] = B[i]; }
+    return { w: W, h: H, data: out };
   }
 
-  var svgs = null, sets = null, W = 0, H = 0;
+  var workerURL = null;
+  try { workerURL = URL.createObjectURL(new Blob([edt1.toString(), edt.toString(), blur.toString(), field.toString(),
+    'onmessage=function(e){var d=e.data,o=field(d.px,d.W,d.H,d.s,d.b);postMessage(o,[o.data.buffer]);};'], { type: 'text/javascript' })); } catch (e) {}
+  function fieldAsync(px, w, h){
+    return new Promise(function(res){
+      var wk = null; try { wk = workerURL && new Worker(workerURL); } catch (e) {}
+      if (!wk) return res(field(px, w, h, SOFT_R, BLOB_R));
+      wk.onmessage = function(e){ wk.terminate(); res(e.data); };
+      wk.onerror = function(){ wk.terminate(); res(field(px, w, h, SOFT_R, BLOB_R)); };
+      wk.postMessage({ px: px, W: w, H: h, s: SOFT_R, b: BLOB_R }, [px.buffer]);
+    });
+  }
+
+  var svgs = null, W = 0, H = 0;
   var staticImg = stage.querySelector('.logo-static'); if (staticImg) staticImg.style.visibility = 'hidden'; // no h2w2 before 'have'
   function rasterize(svgText, cw, ch){
-    return new Promise(function(res){
+    return new Promise(function(res, rej){
       var m = svgText.match(/viewBox="([^"]+)"/)[1].split(/\s+/).map(Number), lw = m[2], lh = m[3];
       var img = new Image();
       img.onload = function(){
@@ -138,74 +149,56 @@
         x.drawImage(img, (cw - lw * k) / 2, (ch - lh * k) / 2, lw * k, lh * k);
         res(x.getImageData(0, 0, cw, ch));
       };
+      img.onerror = rej;
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
     });
   }
-  // distance fields are computed in background workers so the intro video never stutters
-  var workerURL = null;
-  try { workerURL = URL.createObjectURL(new Blob([edt1.toString(), edt.toString(), sdfImage.toString(),
-    'onmessage=function(e){var d=e.data,o=sdfImage(d.px,d.W,d.H,d.spread);postMessage(o,[o.data.buffer]);};'], { type: 'text/javascript' })); } catch (e) {}
-  function sdfAsync(px, w, h, spread){
-    return new Promise(function(res){
-      var wk = null; try { wk = workerURL && new Worker(workerURL); } catch (e) {}
-      if (!wk) return res(sdfImage(px, w, h, spread));
-      wk.onmessage = function(e){ wk.terminate(); res(e.data); };
-      wk.onerror = function(){ wk.terminate(); res(sdfImage(px, w, h, spread)); };
-      wk.postMessage({ px: px, W: w, H: h, spread: spread });
-    });
-  }
-  function makeSet(svgText){
-    var hw = Math.max(2, Math.round(W / 2)), hh = Math.max(2, Math.round(H / 2));
-    return Promise.all([rasterize(svgText, W, H), HOVER ? rasterize(svgText, hw, hh) : null]).then(function(r){
-      return sdfAsync(new Uint8ClampedArray(r[0].data), W, H, Math.max(8, H * 0.12)).then(function(sdf){
-        return { sharp: r[0], sdf: sdf,
-          soft: HOVER ? blurAlpha(r[1].data, hw, hh, Math.max(1, Math.round(hh * 0.035))) : new ImageData(1, 1),
-          wide: HOVER ? blurAlpha(r[1].data, hw, hh, Math.max(2, Math.round(hh * 0.06))) : new ImageData(1, 1) };
-      });
-    });
-  }
 
-  var mouse = { x: .5, y: .5 }, vel = { x: 0, y: 0 }, cur = { x: .5, y: .5, r: 0 }, targetR = 0, hovering = false, running = false;
-  var MAX_R = 0.42, ready = false, morph = 0, wob = 0, mo = 1;
-  var seq = 0;           // hover only (unused while the loop runs)
-  var seg = 0;           // current step: from word seg % 3 to word (seg + 1) % 3
+  var ready = false, cross = 0, melt = 0, seg = 0;
   function fgColor(){ var c = getComputedStyle(stage).color.match(/\d+(\.\d+)?/g) || [17,17,17]; return [c[0]/255, c[1]/255, c[2]/255]; }
 
   function build(){
-    var rect = stage.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2) * RES;
+    var rect = stage.getBoundingClientRect(), dpr = Math.min((window.devicePixelRatio || 1) * RES, 3);
     W = Math.max(2, Math.round(rect.width * dpr)); H = Math.max(2, Math.round(rect.height * dpr));
     canvas.width = W; canvas.height = H; gl.viewport(0, 0, W, H); gl.uniform1f(U.aspect, W / H);
-    return Promise.all(svgs.map(makeSet)).then(function(s){
-      sets = s; upload(0, s[0].sharp); upload(1, s[0].soft); upload(2, s[0].wide);
-      s.forEach(function(x, i){ upload(3 + i, x.sdf); }); useA(seg % 3); useB((seg + 1) % 3);
-      ready = true; draw(performance.now()); stage.classList.add('gl'); if (staticImg) staticImg.style.visibility = 'hidden';
-    });
+    var fw = Math.max(16, Math.round(rect.width * SDF_SCALE)) * 2, fh = Math.max(8, Math.round(rect.height * SDF_SCALE)) * 2;
+    return Promise.all(svgs.map(function(t){ return rasterize(t, fw, fh).then(function(r){ return fieldAsync(new Uint8ClampedArray(r.data), fw, fh); }); }))
+      .then(function(fs){
+        fs.forEach(function(f, i){ upload(i, f); }); pair(seg % 3, (seg + 1) % 3);
+        ready = true; draw(performance.now()); stage.classList.add('gl'); if (staticImg) staticImg.style.visibility = 'hidden';
+      });
   }
 
   var t0 = performance.now();
   function draw(now){
     if (!ready) return;
+    var bump = Math.sin(Math.PI * Math.min(1, Math.max(0, melt)));
     gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform2f(U.mouse, cur.x, cur.y); gl.uniform2f(U.vel, vel.x, vel.y); gl.uniform1f(U.radius, cur.r);
+    gl.uniform1f(U.cross, cross); gl.uniform1f(U.melt, MELT * bump);
+    gl.uniform1f(U.swell, SWELL * bump); gl.uniform1f(U.ripple, RIPPLE * bump);
     gl.uniform1f(U.time, ((now - t0) / 1000) % 600); gl.uniform3fv(U.color, fgColor());
-    gl.uniform1f(U.morph, morph); gl.uniform1f(U.wob, wob); gl.uniform1f(U.mo, mo);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
-
-  // endless loop have -> want -> h2w2 -> have ... drawn from the distance fields the whole time,
-  // so nothing flashes. Each step slows down (never stops) as it passes a word: speed there = WANT.
+  // p (0..1 within a step) -> melt progress and shape cross-over.
+  // The step slows near each word (WANT); the shape swap happens in the middle, while the ink is most liquid.
   function ease(p){
     var m = WANT, TAU = 2 * Math.PI;
     return (m * p + (1 - m) * (p / 2 - Math.sin(TAU * p) / (2 * TAU))) / (m + (1 - m) / 2);
   }
+  function crossOf(m){ var t = Math.min(1, Math.max(0, (m - 0.2) / 0.6)); return t * t * (3 - 2 * t); }
+  function setStep(k, p){
+    if (k !== seg) { seg = k; pair(k % 3, (k + 1) % 3); }
+    var m = ease(p); melt = m; cross = crossOf(m);
+    return m;
+  }
+
   function runSequence(){
     setTimeout(function(){
-      var start = performance.now(), last = -1, shownWord = -1, shownLit = false;
+      var start = performance.now(), shownWord = -1, shownLit = false;
       (function tick(now){
         var e = now - start, k = Math.floor(e / MORPH), p = (e - k * MORPH) / MORPH;
-        if (k !== last) { last = k; seg = k; useA(k % 3); useB((k + 1) % 3); }
-        morph = ease(p); wob = Math.sin(Math.PI * morph); mo = 1;
-        var w = morph < .5 ? k % 3 : (k + 1) % 3;
+        setStep(k, p);
+        var w = cross < .5 ? k % 3 : (k + 1) % 3;
         if (w !== shownWord) { shownWord = w; document.dispatchEvent(new CustomEvent('h2w2:word', { detail: w })); }
         // tent light: switches on as have starts turning into want, fades out as the loop settles back on have
         var step = k % 3, lit = shownLit;
@@ -223,35 +216,6 @@
     mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   }
 
-  // cursor liquid (after the sequence)
-  var spring = { vx: 0, vy: 0 }, last = 0, acc = 0;
-  var K = 0.012, DAMP = 0.955, VMAX = 0.13;
-  function step(){
-    spring.vx = (spring.vx + (mouse.x - cur.x) * K) * DAMP;
-    spring.vy = (spring.vy + (mouse.y - cur.y) * K) * DAMP;
-    cur.x += spring.vx; cur.y += spring.vy;
-    vel.x = (mouse.x - cur.x) * 0.55; vel.y = (mouse.y - cur.y) * 0.55;
-    var vm = Math.sqrt(vel.x*vel.x + vel.y*vel.y);
-    if (vm > VMAX) { vel.x *= VMAX / vm; vel.y *= VMAX / vm; }
-    cur.r += (targetR - cur.r) * (hovering ? 0.05 : 0.022);
-  }
-  function frame(now){
-    acc += Math.min(100, last ? now - last : 16.7); last = now;
-    while (acc >= 16.7) { step(); acc -= 16.7; }
-    draw(now);
-    var still = Math.abs(spring.vx) + Math.abs(spring.vy) + Math.abs(mouse.x - cur.x) + Math.abs(mouse.y - cur.y) < 4e-4;
-    if (!hovering && cur.r < 0.002 && still) { cur.r = 0; draw(now); running = false; last = 0; acc = 0; return; }
-    requestAnimationFrame(frame);
-  }
-  function start(){ if (!running) { running = true; requestAnimationFrame(frame); } }
-  function pos(e){ var r = stage.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; }
-  function move(e){ if (!HOVER || seq < 2 || !ready) return; var p = pos(e); if (!hovering && cur.r < 0.01) { cur.x = p.x; cur.y = p.y; spring.vx = spring.vy = 0; t0 = performance.now(); } mouse = p; hovering = true; targetR = MAX_R; start(); }
-  function leave(){ if (!HOVER || seq < 2) return; hovering = false; targetR = 0; start(); }
-  stage.addEventListener('pointermove', move);
-  stage.addEventListener('pointerdown', move);
-  stage.addEventListener('pointerleave', leave);
-  stage.addEventListener('pointercancel', leave);
-  stage.addEventListener('pointerup', function(e){ if (e.pointerType !== 'mouse') leave(); });
   // WebGL can be dropped by the browser (GPU reset, memory pressure, long time in the background).
   // Show the static SVG meanwhile and rebuild the animation when the context comes back.
   function fallback(){ document.dispatchEvent(new CustomEvent('h2w2:static')); ready = false; stage.classList.remove('gl'); if (staticImg) staticImg.style.visibility = ''; }
@@ -263,8 +227,13 @@
   var rt; window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ if (svgs && !gl.isContextLost()) build().catch(fallback); }, 150); });
   if (window.matchMedia) { var mq = window.matchMedia('(prefers-color-scheme: dark)'); (mq.addEventListener ? mq.addEventListener('change', function(){ draw(performance.now()); }) : mq.addListener(function(){ draw(performance.now()); })); }
 
+  // ?logotest : no loop, frames are driven from the console (for checking the morph frame by frame)
+  var TEST = /[?&]logotest\b/.test(location.search);
   Promise.all(SRC.map(function(u){ return fetch(u).then(function(r){ return r.text(); }); }))
     .then(function(t){ svgs = t; return build(); })
-    .then(function(){ whenIntroGone(runSequence); })
-    .catch(function(){ if (staticImg) staticImg.style.visibility = ''; /* keep static logo */ });
+    .then(function(){
+      if (TEST) { window.__logo = { frame: function(k, p){ setStep(k, p); draw(performance.now()); } }; return; }
+      whenIntroGone(runSequence);
+    })
+    .catch(function(){ fallback(); /* keep static logo */ });
 })();
