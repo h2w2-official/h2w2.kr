@@ -138,7 +138,7 @@
     /* switching on: a lamp catching, stepped flicker then steady; switching off is the 1.8s opacity transition above */
     @keyframes tenton { 0% { opacity: .12; animation-timing-function: steps(1, end); } 8% { opacity: .75; animation-timing-function: steps(1, end); } 14% { opacity: .2; animation-timing-function: steps(1, end); } 26% { opacity: .9; animation-timing-function: steps(1, end); } 32% { opacity: .4; animation-timing-function: steps(1, end); } 40% { opacity: .55; animation-timing-function: cubic-bezier(.2,0,.2,1); } 100% { opacity: 1; } }
     @media (prefers-color-scheme: dark) { .scene .field { filter: invert(1); opacity: .5; } }
-    @media (max-width: 640px) { .hero-state { font-size: 9px; top: -28px; left: 0; width: 100%; } }
+    @media (max-width: 640px) { .stage { width: 100vw; } .hero-state { font-size: 9px; top: -28px; left: 16px; width: calc(100% - 32px); } }
     @media (prefers-reduced-motion: reduce) { .scene .tent, .scene .tent.lit { animation: none; transition: none; opacity: .9; } .hero-state .arrow .c, .hero-state li::after { transition: none; } }
     /* location label, top centre (ref: bpco.kr) */
     .loc { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 6px; text-transform: none; white-space: nowrap; pointer-events: none; }
