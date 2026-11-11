@@ -39,7 +39,10 @@
     main { display: grid; place-items: center; min-height: 100svh; position: relative; padding-bottom: 4svh; overflow: hidden; }
     .dock { position: absolute; left: 0; right: 0; top: 100svh; transform: translateY(-100%); z-index: 5; pointer-events: none; }
     .dock > * { pointer-events: auto; }
-    .dock .label { font-style: normal; opacity: .5; margin-right: 10px; }
+    .dock .label { font-style: normal; opacity: .6; margin-right: 10px; }
+    /* footer + About link sit on the grass field: soft bg halo keeps them readable without hiding the field */
+    .dock > *, .hint { background: color-mix(in srgb, var(--bg) 82%, transparent); box-shadow: 0 0 12px 10px color-mix(in srgb, var(--bg) 82%, transparent); border-radius: 6px; }
+    .dock { font-weight: 500; }
     button.roll { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
     .copy { opacity: .7; text-align: center; padding: 40px 28px; }
     .lc { text-transform: none; }
@@ -58,7 +61,7 @@
     .logo-static { position: absolute; left: 11.29%; top: 16.57%; width: 77.41%; height: auto; pointer-events: none; }
     .stage.gl .logo-static { visibility: hidden; }
     @media (prefers-color-scheme: dark) { .logo-static { filter: invert(1); } }
-    .hint { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); opacity: .5; }
+    .hint { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); opacity: .85; font-weight: 500; }
     .about { max-width: 1120px; margin: 0 auto; padding: 120px 28px 140px; text-transform: none; letter-spacing: 0; }
     .about .mono, .about-pin .mono { font-size: 12px; letter-spacing: .02em; text-transform: uppercase; opacity: .5; }
     .about .ko { margin-top: 12px; font-size: 13px; line-height: 1.8; opacity: .55; word-break: keep-all; }
