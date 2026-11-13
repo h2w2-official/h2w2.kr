@@ -41,7 +41,10 @@
     .dock > * { pointer-events: auto; }
     .dock .label { font-style: normal; opacity: .6; margin-right: 10px; }
     /* footer + About link sit on the grass field: soft bg halo keeps them readable without hiding the field */
-    .dock > *, .hint { background: color-mix(in srgb, var(--bg) 82%, transparent); box-shadow: 0 0 12px 10px color-mix(in srgb, var(--bg) 82%, transparent); border-radius: 6px; }
+    .hint { background: color-mix(in srgb, var(--bg) 82%, transparent); box-shadow: 0 0 12px 10px color-mix(in srgb, var(--bg) 82%, transparent); border-radius: 6px; }
+    .dock { isolation: isolate; }
+    .dock::before { content: ""; position: absolute; left: 0; right: 0; top: -28px; bottom: 0; z-index: -1; pointer-events: none; background: linear-gradient(to top, color-mix(in srgb, var(--bg) 88%, transparent) 40%, transparent); }
+    #copyMail { -webkit-appearance: none; appearance: none; border-radius: 0; }
     .dock { font-weight: 500; }
     button.roll { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
     .copy { opacity: .7; text-align: center; padding: 40px 28px; }
