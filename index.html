@@ -135,7 +135,6 @@
     .hero-state li.arrow { opacity: 1; }
     .hero-state .arrow .c { display: inline-block; opacity: .3; transition: opacity .3s ease; }
     .hero-state .arrow .c.b { opacity: .9; font-weight: 700; }
-    .hero-state .eq.on { font-weight: 700; }
     .scene { position: absolute; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; }
     .scene .field { display: block; width: 100%; height: auto; }
     .scene .tent { position: absolute; left: 46.5%; top: 77.15%; width: 23.23%; height: auto; opacity: .12; filter: drop-shadow(0 0 0 rgba(255, 214, 110, 0)); transition: opacity 1.8s cubic-bezier(.4,0,.2,1), filter 1.8s cubic-bezier(.4,0,.2,1); will-change: opacity; }
@@ -168,7 +167,7 @@
   <main>
   <div class="scene" aria-hidden="true"><img class="field" src="/media/hero/field.webp" alt="" width="1920" height="1080"><img class="tent" src="/media/hero/tent.webp" alt="" width="446" height="219"></div>
   <div class="hero">
-    <ol class="hero-state" aria-hidden="true"><li class="on">(01) HAVE</li><li class="op arrow"><span class="c">-</span><span class="c">-</span><span class="c">-</span><span class="c">&gt;</span></li><li>(02) WANT</li><li class="op eq">=</li><li>(03) <span class="lc">h2w2™</span></li></ol>
+    <ol class="hero-state" aria-hidden="true"><li class="on">(01) HAVE</li><li class="op arrow"><span class="c">-</span><span class="c">-</span><span class="c">-</span><span class="c">&gt;</span></li><li>(02) WANT</li><li class="op arrow"><span class="c">-</span><span class="c">-</span><span class="c">-</span><span class="c">&gt;</span></li><li>(03) <span class="lc">h2w2™</span></li></ol>
   <h1 class="stage" id="stage">
     <svg id="logo" role="img" aria-label="h2w2" viewBox="-30 -30 394 181" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <path d="M320.967 24.6523L320.967 33.3438H318.721L318.721 20.6484L321.504 20.6484L325.41 29.9258L329.316 20.6484L332.051 20.6484L332.051 33.3438H329.805L329.805 24.7256L325.996 33.3438H324.775L320.967 24.6523ZM310.42 22.6016L306.562 22.6016V20.6484L316.523 20.6484V22.6016L312.666 22.6016L312.666 33.3438H310.42L310.42 22.6016Z" fill="currentColor"/>
@@ -292,10 +291,10 @@
     })();
   </script>
   <script>
-    // word state follows the logo: (01) have ---> (02) want = (03) h2w2
+    // word state follows the logo: (01) have ---> (02) want ---> (03) h2w2
     (function () {
-      var li = document.querySelectorAll('.hero-state li'), words = [li[0], li[2], li[4]], arrow = li[1], eq = li[3];
-      var chars = arrow.querySelectorAll('.c'), timers = [], loop = null, STEP = 260, EQ = 650, EQ_HOLD = 1500;
+      var li = document.querySelectorAll('.hero-state li'), arrow = li[1], eq = li[3];
+      var arrows = [arrow.querySelectorAll('.c'), eq.querySelectorAll('.c')], timers = [], loop = null, STEP = 260;
       var tent = document.querySelector('.scene .tent');
       var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       function clear(){ timers.forEach(clearTimeout); timers = []; clearInterval(loop); loop = null; }
@@ -303,25 +302,18 @@
       // on: array of [have, arrow, want, eq, h2w2] highlight flags
       function show(on){ [li[0], arrow, li[2], eq, li[4]].forEach(function(el, i){ el.classList.toggle('on', !!on[i]); }); }
       // bold the characters in [from, to): fill ->, then release from the left so the weight travels right
-      function bolden(to, from){ from = from || 0; for (var i = 0; i < chars.length; i++) chars[i].classList.toggle('b', i >= from && i < to); }
+      function bolden(to, from, a){ from = from || 0; arrows.forEach(function(chars, k){ for (var i = 0; i < chars.length; i++) chars[i].classList.toggle('b', k === (a || 0) && i >= from && i < to); }); }
       function set(w){
         clear(); bolden(0);
         if (w === 0) { show([1,0,0,0,0]); return; }
-        if (w === 1) {                       // have leaves right, arrow fills - / -- / --- / --->, then want
-          if (still) { show([0,0,1,0,0]); bolden(4); return; }
-          show([0,0,0,0,0]);
-          // -  /  --  /  ---  /  --->  then  ·-->  /  ··->  /  ···>  /  ····  (weight passes through to want)
-          for (var i = 1; i <= 4; i++) (function(n){ later(STEP * n, function(){ bolden(n); }); })(i);
-          for (var j = 1; j <= 4; j++) (function(n){ later(STEP * (5 + n), function(){ bolden(4, n); }); })(j);
-          later(STEP * 9, function(){ show([0,0,1,0,0]); });      // want lands as the last > lets go
-          return;
-        }
-        // h2w2: want -> want + = -> = -> = + h2w2 -> h2w2 (want's line slides out right into =)
-        if (still) { show([0,0,0,0,1]); return; }
-        show([0,0,1,1,0]);
-        later(EQ,                 function(){ show([0,0,0,1,0]); });   // want's line slides out right, = holds
-        later(EQ + EQ_HOLD,       function(){ show([0,0,0,1,1]); });
-        later(EQ * 2 + EQ_HOLD,   function(){ show([0,0,0,0,1]); });
+        // have -> want and want -> h2w2 run the same way: the word leaves right, its arrow fills
+        // - / -- / --- / --->, the weight passes through, and the next word lands as the last > lets go
+        var a = w === 1 ? 0 : 1, next = w === 1 ? [0,0,1,0,0] : [0,0,0,0,1];
+        if (still) { show(next); bolden(4, 0, a); return; }
+        show([0,0,0,0,0]);
+        for (var i = 1; i <= 4; i++) (function(n){ later(STEP * n, function(){ bolden(n, 0, a); }); })(i);
+        for (var j = 1; j <= 4; j++) (function(n){ later(STEP * (5 + n), function(){ bolden(4, n, a); }); })(j);
+        later(STEP * 9, function(){ show(next); });
       }
       document.addEventListener('h2w2:word', function(e){ set(e.detail); });
       document.addEventListener('h2w2:static', function(){ clear(); bolden(0); show([0,0,0,0,1]); if (tent) tent.classList.add('lit'); });
