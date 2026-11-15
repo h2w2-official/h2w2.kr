@@ -294,7 +294,7 @@
     // word state follows the logo: (01) have ---> (02) want ---> (03) h2w2
     (function () {
       var li = document.querySelectorAll('.hero-state li'), arrow = li[1], eq = li[3];
-      var arrows = [arrow.querySelectorAll('.c'), eq.querySelectorAll('.c')], timers = [], loop = null, STEP = 260;
+      var arrows = [arrow.querySelectorAll('.c'), eq.querySelectorAll('.c')], timers = [], loop = null;
       var tent = document.querySelector('.scene .tent');
       var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       function clear(){ timers.forEach(clearTimeout); timers = []; clearInterval(loop); loop = null; }
@@ -303,19 +303,20 @@
       function show(on){ [li[0], arrow, li[2], eq, li[4]].forEach(function(el, i){ el.classList.toggle('on', !!on[i]); }); }
       // bold the characters in [from, to): fill ->, then release from the left so the weight travels right
       function bolden(to, from, a){ from = from || 0; arrows.forEach(function(chars, k){ for (var i = 0; i < chars.length; i++) chars[i].classList.toggle('b', k === (a || 0) && i >= from && i < to); }); }
-      function set(w){
+      function set(w, dur){
         clear(); bolden(0);
         if (w === 0) { show([1,0,0,0,0]); return; }
         // have -> want and want -> h2w2 run the same way: the word leaves right, its arrow fills
         // - / -- / --- / --->, the weight passes through, and the next word lands as the last > lets go
         var a = w === 1 ? 0 : 1, next = w === 1 ? [0,0,1,0,0] : [0,0,0,0,1];
         if (still) { show(next); bolden(4, 0, a); return; }
+        var STEP = dur ? dur / 9 : 260;   // fill + release spans the logo's cross-over, next word lands as it settles
         show([0,0,0,0,0]);
         for (var i = 1; i <= 4; i++) (function(n){ later(STEP * n, function(){ bolden(n, 0, a); }); })(i);
         for (var j = 1; j <= 4; j++) (function(n){ later(STEP * (5 + n), function(){ bolden(4, n, a); }); })(j);
         later(STEP * 9, function(){ show(next); });
       }
-      document.addEventListener('h2w2:word', function(e){ set(e.detail); });
+      document.addEventListener('h2w2:word', function(e){ set(e.detail, e.dur); });
       document.addEventListener('h2w2:static', function(){ clear(); bolden(0); show([0,0,0,0,1]); if (tent) tent.classList.add('lit'); });
       document.addEventListener('h2w2:tent', function(e){ if (!tent) return; if (e.detail) tent.classList.add('lit'); else tent.classList.remove('lit', 'steady'); });
       if (tent) tent.addEventListener('animationend', function(){ if (tent.classList.contains('lit')) tent.classList.add('steady'); });

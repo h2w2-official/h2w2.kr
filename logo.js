@@ -185,6 +185,9 @@
     var m = WANT, TAU = 2 * Math.PI;
     return (m * p + (1 - m) * (p / 2 - Math.sin(TAU * p) / (2 * TAU))) / (m + (1 - m) / 2);
   }
+  // step progress (0..1) at which the eased morph reaches v: used to time the label row with the shape
+  function easeInv(v){ var lo = 0, hi = 1; for (var i = 0; i < 40; i++){ var mid = (lo + hi) / 2; if (ease(mid) < v) lo = mid; else hi = mid; } return lo; }
+  var P_END = easeInv(0.8);   // cross-over ends at m = 0.8 (see crossOf)
   function crossOf(m){ var t = Math.min(1, Math.max(0, (m - 0.2) / 0.6)); return t * t * (3 - 2 * t); }
   function setStep(k, p){
     if (k !== seg) { seg = k; pair(k % 3, (k + 1) % 3); }
@@ -198,8 +201,14 @@
       (function tick(now){
         var e = now - start, k = Math.floor(e / MORPH), p = (e - k * MORPH) / MORPH;
         setStep(k, p);
-        var w = cross < .5 ? k % 3 : (k + 1) % 3;
-        if (w !== shownWord) { shownWord = w; document.dispatchEvent(new CustomEvent('h2w2:word', { detail: w })); }
+        // the label row starts moving the moment the shape starts crossing over, and is told how long the crossing takes
+        var w = cross > 0 ? (k + 1) % 3 : k % 3;
+        if (w !== shownWord) {
+          shownWord = w;
+          var ev = new CustomEvent('h2w2:word', { detail: w });
+          ev.dur = Math.max(0, (P_END - p) * MORPH);
+          document.dispatchEvent(ev);
+        }
         // tent light: switches on as have starts turning into want, fades out as the loop settles back on have
         var step = k % 3, lit = shownLit;
         if (step === 0 && p >= TENT_ON) lit = true; else if (step === 2 && p >= TENT_OFF) lit = false;
